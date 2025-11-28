@@ -55,8 +55,8 @@ const Auth = (function(){
     function sendMfaCode(email){
         const code = Math.floor(100000 + Math.random()*900000).toString();
         sessionStorage.setItem('tax_mfa_' + email.toLowerCase(), code);
-        // In real world, send via SMS/email. Here we log to console for demo.
-        console.info('Simulated MFA code for', email, code);
+        // Show MFA code as alert for demo
+        alert(`Your Verification Code:\n\n${code}\n\nEnter this code to verify your account.`);
         return code;
     }
 

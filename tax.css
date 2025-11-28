@@ -98,6 +98,28 @@ select {
     font-size: 1rem;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 44px;
+}
+
+/* Enhanced Date Input for Mobile */
+input[type="date"] {
+    padding: 10px 8px;
+    cursor: pointer;
+}
+
+/* iOS Safari Date Input */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    margin-right: 4px;
+}
+
+/* Firefox Date Input */
+input[type="date"]::-moz-calendar-picker-indicator {
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
 }
 
 input:focus, 
