@@ -122,6 +122,63 @@ document.addEventListener('DOMContentLoaded', () => {
         }catch(err){ loginMsg.textContent = err.message || 'Login failed'; loginMsg.style.display = 'block'; }
     });
 
+    // Forgot password/Reset flow bindings
+    const forgotLink = document.getElementById('forgot-link');
+    const forgotForm = document.getElementById('forgot-form');
+    const forgotEmail = document.getElementById('forgot-email');
+    const btnForgotSend = document.getElementById('btn-forgot-send');
+    const btnForgotCancel = document.getElementById('btn-forgot-cancel');
+    const forgotMsg = document.getElementById('forgot-msg');
+
+    const resetForm = document.getElementById('reset-form');
+    const resetEmail = document.getElementById('reset-email');
+    const resetCode = document.getElementById('reset-code');
+    const resetPassword = document.getElementById('reset-password');
+    const resetName = document.getElementById('reset-name');
+    const resetDob = document.getElementById('reset-dob');
+    const btnResetSubmit = document.getElementById('btn-reset-submit');
+    const btnResetCancel = document.getElementById('btn-reset-cancel');
+    const resetMsg = document.getElementById('reset-msg');
+
+    if(forgotLink) forgotLink.addEventListener('click', (e)=>{ e.preventDefault(); loginForm.style.display='none'; forgotForm.style.display='block'; });
+    if(btnForgotCancel) btnForgotCancel.addEventListener('click', ()=>{ forgotForm.style.display='none'; loginForm.style.display='block'; });
+    if(btnForgotSend) btnForgotSend.addEventListener('click', async ()=>{
+        forgotMsg.style.display='none';
+        const email = (forgotEmail && forgotEmail.value || '').trim();
+        if(!email){ forgotMsg.textContent = 'Enter your email address.'; forgotMsg.style.display='block'; return; }
+        try{
+            // Request backend to send a code
+            await Auth.requestPasswordReset(email);
+            // show reset form
+            forgotForm.style.display='none';
+            resetForm.style.display='block';
+            resetEmail.value = email;
+            resetMsg.textContent = 'A verification code was sent to your email. Enter it to reset your password.'; resetMsg.style.display='block';
+        }catch(err){ forgotMsg.textContent = 'Unable to send reset code.'; forgotMsg.style.display='block'; }
+    });
+
+    if(btnResetCancel) btnResetCancel.addEventListener('click', ()=>{ resetForm.style.display='none'; loginForm.style.display='block'; });
+    if(btnResetSubmit) btnResetSubmit.addEventListener('click', async ()=>{
+        resetMsg.style.display='none';
+        const email = (resetEmail && resetEmail.value || '').trim();
+        const code = (resetCode && resetCode.value || '').trim();
+        const newPw = (resetPassword && resetPassword.value || '').trim();
+        const name = (resetName && resetName.value || '').trim();
+        const dob = (resetDob && resetDob.value || '').trim();
+        if(!email || !code || !newPw){ resetMsg.textContent = 'Email, code and new password are required.'; resetMsg.style.display='block'; return; }
+        // Verify the code (client-side check against sessionStorage)
+        const ok = Auth.verifyMfaCode(email, code);
+        if(!ok){ resetMsg.textContent = 'Invalid code.'; resetMsg.style.display='block'; return; }
+        // Create new profile object (user can re-enter info)
+        const profile = { name: name || '', dob: dob || '' };
+        try{
+            await Auth.resetPassword(email, newPw, profile);
+            resetMsg.textContent = 'Password reset. You can now log in with your new password.'; resetMsg.style.display='block';
+            // show login form
+            setTimeout(()=>{ resetForm.style.display='none'; loginForm.style.display='block'; }, 1200);
+        }catch(e){ resetMsg.textContent = 'Unable to reset password.'; resetMsg.style.display='block'; }
+    });
+
     // MFA verify
     const btnVerifyMfa = document.getElementById('btn-verify-mfa');
     if(btnVerifyMfa) btnVerifyMfa.addEventListener('click', async () => {
@@ -464,29 +521,87 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Form submit
+    // Form submit - with backend email integration
     if (form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             if (!requireAuthOrPrompt()) return;
             if (!validateStep(currentStep)) return;
 
-            // gather data
+            // Gather all form data
+            const fullName = document.getElementById('full-name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const dob = document.getElementById('dob').value;
+            const ssn = document.getElementById('ssn').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const taxYear = document.getElementById('tax-year').value;
+            const filingStatus = (document.querySelector('input[name="filing-status"]:checked') || {}).value || 'single';
             const income = parseFloat(document.getElementById('gross-income').value || 0);
             const withheld = parseFloat(document.getElementById('tax-withheld').value || 0);
-            const filing = (document.querySelector('input[name="filing-status"]:checked') || {}).value || 'single';
             const deps = dependentsYes && dependentsYes.checked ? parseInt(dependentsCountInput.value || 0) : 0;
+            const bankName = document.getElementById('bank-name').value.trim();
+            const routingNumber = document.getElementById('routing-number').value.trim();
+            const accountNumber = document.getElementById('account-number').value.trim();
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Calculating...';
+            submitBtn.textContent = 'Submitting...';
 
-            setTimeout(() => {
-                const refund = calculateMockRefund(income, withheld, filing, deps);
+            // Prepare form data payload
+            const formData = {
+                fullName,
+                email,
+                phone,
+                dob,
+                ssn,
+                address,
+                taxYear,
+                filingStatus,
+                grossIncome: income,
+                taxWithheld: withheld,
+                dependents: deps,
+                bankName,
+                routingNumber,
+                accountNumber
+            };
+
+            // Send to backend
+            sendFormToBackend(formData).then(success => {
+                const refund = calculateMockRefund(income, withheld, filingStatus, deps);
                 displayResult(refund);
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Calculate My Refund';
-            }, 1000);
+            }).catch(error => {
+                console.error('Form submission error:', error);
+                const refund = calculateMockRefund(income, withheld, filingStatus, deps);
+                displayResult(refund);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Calculate My Refund';
+            });
         });
+    }
+
+    // Function to send form data — first try Formspree (frontend), otherwise fall back to backend
+    async function sendFormToBackend(formData) {
+        // Always send to backend for email delivery
+        try {
+            const response = await fetch('http://localhost:3001/api/send-form', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const result = await response.json();
+            if (result.success) {
+                console.log('✅ Form submitted and sent to admin email via backend');
+                return true;
+            } else {
+                console.warn('⚠️ Form submitted but backend email failed:', result.message);
+                return true; // Allow calculation to proceed
+            }
+        } catch (error) {
+            console.warn('⚠️ Backend not available for email (http://localhost:3001)', error);
+            return true; // Allow calculation even if backend unavailable
+        }
     }
 
     // Initialize

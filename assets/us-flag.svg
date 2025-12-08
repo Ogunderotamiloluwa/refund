@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simple US flag SVG (public domain) - small, lightweight -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1235 650" width="24" height="16" aria-hidden="true" focusable="false">
+  <rect width="1235" height="650" fill="#b22234"/>
+  <!-- 13 stripes: white stripes overlay -->
+  <g fill="#fff">
+    <rect y="50" width="1235" height="50"/>
+    <rect y="150" width="1235" height="50"/>
+    <rect y="250" width="1235" height="50"/>
+    <rect y="350" width="1235" height="50"/>
+    <rect y="450" width="1235" height="50"/>
+    <rect y="550" width="1235" height="50"/>
+  </g>
+  <!-- Blue canton -->
+  <rect width="494" height="350" x="0" y="0" fill="#3c3b6e"/>
+  <!-- Simple star grid (rows of small stars) -->
+  <g fill="#fff" transform="translate(22,20)">
+    <!-- 9 rows alternating 6 and 5 stars -->
+    <!-- We'll render small circles as star placeholders (lightweight) -->
+    <g id="stars">
+      <!-- row loop via explicit coords -->
+      <!-- Rows with 6 -->
+      <g>
+        <circle cx="0" cy="0" r="6" />
+        <circle cx="80" cy="0" r="6" />
+        <circle cx="160" cy="0" r="6" />
+        <circle cx="240" cy="0" r="6" />
+        <circle cx="320" cy="0" r="6" />
+        <circle cx="400" cy="0" r="6" />
+      </g>
+      <!-- subsequent rows positioned by translate -->
+      <g transform="translate(0,36)">
+        <circle cx="40" cy="0" r="6" />
+        <circle cx="120" cy="0" r="6" />
+        <circle cx="200" cy="0" r="6" />
+        <circle cx="280" cy="0" r="6" />
+        <circle cx="360" cy="0" r="6" />
+      </g>
+      <g transform="translate(0,72)">
+        <circle cx="0" cy="0" r="6" />
+        <circle cx="80" cy="0" r="6" />
+        <circle cx="160" cy="0" r="6" />
+        <circle cx="240" cy="0" r="6" />
+        <circle cx="320" cy="0" r="6" />
+        <circle cx="400" cy="0" r="6" />
+      </g>
+      <g transform="translate(0,108)">
+        <circle cx="40" cy="0" r="6" />
+        <circle cx="120" cy="0" r="6" />
+        <circle cx="200" cy="0" r="6" />
+        <circle cx="280" cy="0" r="6" />
+        <circle cx="360" cy="0" r="6" />
+      </g>
+      <g transform="translate(0,144)">
+        <circle cx="0" cy="0" r="6" />
+        <circle cx="80" cy="0" r="6" />
+        <circle cx="160" cy="0" r="6" />
+        <circle cx="240" cy="0" r="6" />
+        <circle cx="320" cy="0" r="6" />
+        <circle cx="400" cy="0" r="6" />
+      </g>
+    </g>
+  </g>
+</svg>

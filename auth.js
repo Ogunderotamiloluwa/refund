@@ -51,13 +51,37 @@ const Auth = (function(){
 
     function getSession(){ return sessionStorage.getItem('tax_current_user'); }
 
-    // Simulate MFA: store single code in sessionStorage
-    function sendMfaCode(email){
+    // Send MFA code via backend email
+    async function sendMfaCode(email){
         const code = Math.floor(100000 + Math.random()*900000).toString();
         sessionStorage.setItem('tax_mfa_' + email.toLowerCase(), code);
-        // Show MFA code as alert for demo
-        alert(`Your Verification Code:\n\n${code}\n\nEnter this code to verify your account.`);
+        
+        try {
+            // Send to backend to email user
+            const response = await fetch('http://localhost:3001/api/send-mfa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, mfaCode: code })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert(`✅ Verification code sent to:\n${email}\n\nCheck your email for the 6-digit code.`);
+            } else {
+                alert(`⚠️ Verification code generated but email send failed.\n\nCode: ${code}\n\n(Backend may not be running)`);
+            }
+        } catch (error) {
+            console.warn('Backend not available, showing code in alert:', error);
+            alert(`✅ Verification Code:\n\n${code}\n\n(Backend not configured)\n\nEnter this code to verify your account.`);
+        }
+        
         return code;
+    }
+
+    // Exposed helper: request a password reset code via backend email
+    async function requestPasswordReset(email){
+        // Reuse sendMfaCode which stores the code locally and attempts to email via backend
+        return sendMfaCode(email);
     }
 
     function verifyMfa(email, code){
@@ -92,6 +116,14 @@ const Auth = (function(){
                 return true;
             }
             return false;
+        },
+        // Reset password: overwrite encrypted profile for `email` using newPassword and provided profile data
+        async resetPassword(email, newPassword, profileObj){
+            // This flow will create a new encrypted profile using the provided profileObj and newPassword.
+            // NOTE: If you do not provide profileObj that matches the previous account, previous data cannot be recovered from the encrypted blob.
+            const enc = await encryptProfile(newPassword, profileObj || {});
+            storeEncrypted(email, enc);
+            return true;
         },
         logout(){ clearSession(); },
         isAuthenticated(){ return !!getSession(); },
