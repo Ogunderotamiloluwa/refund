@@ -303,6 +303,11 @@ input::placeholder {
 
 /* Tablet: 480px and up */
 @media (min-width: 480px) {
+
+    input[type="password"] {
+        font-size: 1.3rem;
+        padding: 10px;
+    }
     .form-container {
         padding: 18px;
         max-width: 600px;

