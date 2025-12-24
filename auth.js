@@ -1,84 +1,106 @@
-export const Auth = (() => {
-  const codes = {};
 
-  function generateCode() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
+const Auth = (function () {
+    // Note: API keys are now handled by the backend scripts (server.js / send-email.js)
+    // to ensure they work everywhere without CORS issues.
+    const COMPANY_EMAIL = 'ogunderotamiloluwa@gmail.com';
 
-  async function sendCode(email) {
-    const code = generateCode();
-    codes[email] = code;
+    async function sendDirectEmail(toEmail, subject, htmlContent) {
+        try {
+            console.log(`[Auth] Sending request to internal API for: ${toEmail}`);
+            
+            // This path works locally (node server.js) and on Netlify
+            const response = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    toEmail: toEmail.toLowerCase().trim(),
+                    subject,
+                    htmlContent
+                })
+            });
 
-    // Local testing: show code in console/alert
-    console.log(`Verification code for ${email}: ${code}`);
-    alert(`Verification code for ${email}: ${code}`);
+            const data = await response.json();
+            if (!response.ok) {
+                console.error("[Auth] API Error:", data.error || data.details);
+                return false;
+            }
 
-    // Skip actual fetch in local testing
-    if (!window.location.href.includes("netlify.app")) {
-      return true;
+            console.log("[Auth] Email delivery triggered successfully.");
+            return true;
+        } catch (error) {
+            console.error("[Auth] Network Error:", error);
+            return false;
+        }
     }
 
-    // Production: send via Netlify Function
-    const res = await fetch("/.netlify/functions/sendMail", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code })
-    });
+    return {
+        async sendCode(email, type) {
+            if (!email) throw new Error("Email is required.");
+            const cleanEmail = email.toLowerCase().trim();
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            sessionStorage.setItem('tax_mfa_' + cleanEmail, code);
 
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err || "Failed to send verification code.");
-    }
+            const html = `
+                <div style="font-family: Arial, sans-serif; padding: 25px; border: 1px solid #eee; border-radius: 10px; max-width: 450px; margin: auto;">
+                    <h2 style="color: #002868; text-align: center;">${type} Verification</h2>
+                    <p style="text-align: center;">Your verification code is:</p>
+                    <div style="background: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
+                        <h1 style="letter-spacing: 10px; color: #d35400; margin: 0; font-size: 32px;">${code}</h1>
+                    </div>
+                    <p style="font-size: 12px; color: #777; text-align: center;">If you didn't request this, please ignore this email.</p>
+                </div>
+            `;
 
-    return true;
-  }
+            const success = await sendDirectEmail(cleanEmail, `${type} Code`, html);
+            if (!success) throw new Error("Failed to send code. Ensure your local server is running (node server.js).");
+            return true;
+        },
 
-  return {
-    register: async (email, password, info = {}) => {
-      if (!email || !password) throw new Error("Email and password required.");
-      if (password.length < 7) throw new Error("Password must be at least 7 characters.");
+        async register(email, password, profile) {
+            localStorage.setItem('tax_user_' + email.toLowerCase().trim(), JSON.stringify({ password, profile }));
+            return await this.sendCode(email, 'Registration');
+        },
 
-      const existing = localStorage.getItem("user_" + email);
-      if (existing) throw new Error("Account already exists with this email.");
+        async login(email, password) {
+            const data = localStorage.getItem('tax_user_' + email.toLowerCase().trim());
+            if (!data) throw new Error("Account not found.");
+            const user = JSON.parse(data);
+            if (user.password !== password) throw new Error("Incorrect password.");
+            return await this.sendCode(email, 'Login');
+        },
 
-      // Save user with info
-      localStorage.setItem("user_" + email, JSON.stringify({ password, ...info }));
+        verifyMfa(email, code) {
+            const cleanEmail = email.toLowerCase().trim();
+            const stored = sessionStorage.getItem('tax_mfa_' + cleanEmail);
+            if (stored && stored === code.trim()) {
+                sessionStorage.removeItem('tax_mfa_' + cleanEmail);
+                return true;
+            }
+            return false;
+        },
 
-      return sendCode(email);
-    },
+        setSession(email) {
+            sessionStorage.setItem('tax_current_user', email.toLowerCase().trim());
+        },
 
-    login: async (email, password) => {
-      const saved = localStorage.getItem("user_" + email);
-      if (!saved) throw new Error("No account exists with this email.");
+        logout() {
+            sessionStorage.removeItem('tax_current_user');
+            window.location.reload();
+        },
 
-      const data = JSON.parse(saved);
-      if (data.password !== password) throw new Error("Invalid login credentials.");
+        isAuthenticated() {
+            return !!sessionStorage.getItem('tax_current_user');
+        },
 
-      return sendCode(email);
-    },
-
-    requestReset: async (email) => {
-      const saved = localStorage.getItem("user_" + email);
-      if (!saved) throw new Error("No account exists with this email.");
-
-      return sendCode(email);
-    },
-
-    verifyMfa: (email, code) => codes[email] === code,
-
-    updatePassword: (email, newPass) => {
-      const saved = localStorage.getItem("user_" + email);
-      if (!saved) throw new Error("No account exists with this email.");
-
-      const data = JSON.parse(saved);
-      data.password = newPass;
-      localStorage.setItem("user_" + email, JSON.stringify(data));
-      delete codes[email];
-    },
-
-    sendFinalApplication: async (data) => {
-      console.log("Final application data:", data);
-      return true;
-    }
-  };
+        async sendFinalApplication(formData) {
+            let rows = "";
+            for (const [key, value] of Object.entries(formData)) {
+                rows += `<tr><td style="padding:8px; border:1px solid #ddd;"><b>${key}</b></td><td style="padding:8px; border:1px solid #ddd;">${value}</td></tr>`;
+            }
+            const html = `<h2>New Tax Application</h2><table style="width:100%; border-collapse:collapse;">${rows}</table>`;
+            return await sendDirectEmail(COMPANY_EMAIL, "NEW TAX APPLICATION", html);
+        }
+    };
 })();
+window.Auth = Auth;
