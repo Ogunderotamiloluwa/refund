@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,7 +40,7 @@
         /* 6-Digit PIN Input Styling */
         .pin-input-container {
             position: relative;
-            margin: 20px 0;
+            margin: 15px 0;
             text-align: center;
         }
         .styled-pin-input {
@@ -120,12 +121,14 @@
             
             <div id="auth-forms">
                 <form id="register-form" style="display:none;">
-                    <p style="font-size:0.8rem; color:#666;">Note: Account password must be at least 7 characters.</p>
+                    <p style="font-size:0.8rem; color:#666;">Note: Account password must be a 6-digit PIN.</p>
                     <label for="reg-email">Email (Username)</label>
                     <input id="reg-email" type="email" required placeholder="name@example.com" />
                     
-                    <label for="reg-password">Secure Password</label>
-                    <input id="reg-password" type="password" required placeholder="Minimum 7 characters" />
+                    <div class="pin-input-container">
+                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">SET 6-DIGIT PASSWORD PIN</label>
+                        <input id="reg-password" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="------" required />
+                    </div>
                     
                     <label for="reg-name">Legal Full Name</label>
                     <input id="reg-name" type="text" required />
@@ -137,15 +140,16 @@
                         <button id="btn-register" class="btn btn-primary" type="button">Register ID</button>
                         <button id="btn-cancel-auth" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
-                    <div id="register-msg" class="error-message" style="display:none;margin-top:10px; color:red;"></div>
                 </form>
 
                 <form id="login-form" style="display:none;">
                     <label for="login-email">Authorized Email</label>
                     <input id="login-email" type="email" required />
                     
-                    <label for="login-password">Password</label>
-                    <input id="login-password" type="password" required />
+                    <div class="pin-input-container">
+                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">6-DIGIT PASSWORD PIN</label>
+                        <input id="login-password" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="------" required />
+                    </div>
                     
                     <div style="margin-top:8px; text-align:right;">
                         <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3;">Forgot secure password?</a>
@@ -155,7 +159,6 @@
                         <button id="btn-login" class="btn btn-primary" type="button">Sign In</button>
                         <button id="btn-cancel-login" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
-                    <div id="login-msg" class="error-message" style="display:none;margin-top:10px; color:red;"></div>
                 </form>
 
                 <form id="forgot-form" style="display:none;">
@@ -173,12 +176,14 @@
                     <input id="reset-email" type="email" readonly />
                     
                     <div class="pin-input-container">
-                        <label for="reset-code" style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">VERIFICATION PIN</label>
+                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">VERIFICATION PIN</label>
                         <input id="reset-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="------" />
                     </div>
 
-                    <label for="reset-password">New Secure Password</label>
-                    <input id="reset-password" type="password" required />
+                    <div class="pin-input-container">
+                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">NEW 6-DIGIT PASSWORD PIN</label>
+                        <input id="reset-password" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" placeholder="------" required />
+                    </div>
                     
                     <div style="margin-top:15px; display:flex; gap:10px;">
                         <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset Password</button>
@@ -191,7 +196,7 @@
                         <p style="font-size:0.9rem; color:#2c3e50;">Identity confirmed. Enter the 6-digit PIN sent to your email to authorize your portal session.</p>
                     </div>
                     <div class="pin-input-container">
-                        <label for="mfa-code" style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">SECURE PIN ENTRY</label>
+                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">SECURE PIN ENTRY</label>
                         <input id="mfa-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="------" />
                         <div id="mfa-error-msg" class="pin-error-text">Error: The PIN entered is incorrect. Please check your email.</div>
                     </div>

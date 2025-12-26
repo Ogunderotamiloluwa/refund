@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Auth) {
         console.error("Critical: Auth.js not found.");
@@ -9,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentStep = 1;
     let lastFocusedElement = null;
 
-    // UI Element Mapping - MUST match HTML IDs exactly
+    // UI Element Mapping
     const ui = {
         authModal: document.getElementById('auth-modal'),
         loginForm: document.getElementById('login-form'),
@@ -22,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
         regBtnTop: document.getElementById('btn-show-register'),
         logoutBtnTop: document.getElementById('btn-logout'),
         
-        // Main Refund Form Container and Components
         refundForm: document.getElementById('refund-form'),
         progressBar: document.getElementById('progress-bar'),
         portalTitle: document.getElementById('portal-title'),
@@ -32,24 +32,22 @@ document.addEventListener('DOMContentLoaded', () => {
         prevBtn: document.getElementById('prevBtn'),
         submitBtn: document.getElementById('submitBtn'),
         
-        // Modal Specific Links/Buttons
         forgotPasswordLink: document.getElementById('forgot-link'),
         closeModalBtns: document.querySelectorAll('#btn-cancel-auth, #btn-cancel-login, #btn-forgot-cancel, #btn-reset-cancel'),
         
-        // Final Results
         finalPage: document.getElementById('final-results-page'),
 
-        // MFA & Reset Specific
         mfaCodeInput: document.getElementById('mfa-code'),
         resetCodeInput: document.getElementById('reset-code'),
         mfaErrorMsg: document.getElementById('mfa-error-msg'),
-        mfaVerifyBtn: document.getElementById('btn-verify-mfa')
+        mfaVerifyBtn: document.getElementById('btn-verify-mfa'),
+
+        // PIN-styled password fields
+        regPass: document.getElementById('reg-password'),
+        loginPass: document.getElementById('login-password'),
+        resetPass: document.getElementById('reset-password')
     };
 
-    /**
-     * Updates Top Bar based on login status.
-     * Note: Per user request, displays the logged-in email at the top.
-     */
     function updateUIState() {
         const isAuth = window.Auth.isAuthenticated();
         const currentUser = sessionStorage.getItem('tax_current_user');
@@ -75,15 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Switches form views inside the modal.
-     */
     function showAuthForm(formElement) {
         const forms = [ui.loginForm, ui.regForm, ui.mfaForm, ui.forgotForm, ui.resetForm];
         forms.forEach(f => { if(f) f.style.display = 'none'; });
         if (formElement) {
             formElement.style.display = 'block';
-            // Auto-focus first visible input
             const firstInput = formElement.querySelector('input:not([readonly])');
             if (firstInput) setTimeout(() => firstInput.focus(), 100);
         }
@@ -99,9 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeModal() {
-        // Prevent closing if we are in the middle of a required MFA flow
         if (ui.mfaForm && ui.mfaForm.style.display === 'block' && !window.Auth.isAuthenticated()) {
-            return; // Can't close modal during required verification
+            return; 
         }
         if (ui.authModal) {
             if (lastFocusedElement) lastFocusedElement.focus();
@@ -116,41 +109,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ui.mfaErrorMsg) ui.mfaErrorMsg.style.display = 'none';
     }
 
-    /**
-     * Controls main tax form step navigation.
-     */
     function navigateToStep(stepNum) {
         if (!ui.formSections.length) return;
-
         ui.formSections.forEach(sec => {
             sec.style.display = (parseInt(sec.dataset.step) === stepNum) ? 'block' : 'none';
         });
-
         ui.progressBarSteps.forEach(step => {
             const sNum = parseInt(step.dataset.step);
             step.classList.toggle('active', sNum === stepNum);
             step.classList.toggle('completed', sNum < stepNum);
         });
-
         currentStep = stepNum;
         if (ui.prevBtn) ui.prevBtn.disabled = (currentStep === 1);
         if (ui.nextBtn) ui.nextBtn.style.display = (currentStep === 5) ? 'none' : 'inline-block';
         if (ui.submitBtn) ui.submitBtn.style.display = (currentStep === 5) ? 'inline-block' : 'none';
-
         if (currentStep === 5) updateSummary();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    /**
-     * Validates that all required fields in the current step are filled.
-     */
     function validateCurrentStep() {
         const currentSection = document.querySelector(`.step-content[data-step="${currentStep}"]`);
         if (!currentSection) return true;
-
         const requiredInputs = currentSection.querySelectorAll('input[required], select[required]');
         let isValid = true;
-
         requiredInputs.forEach(input => {
             let fieldValid = true;
             if (input.type === 'radio') {
@@ -160,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (!input.value.trim()) {
                 fieldValid = false;
             }
-
             if (!fieldValid) {
                 isValid = false;
                 input.classList.add('error-border');
@@ -168,20 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.classList.remove('error-border');
             }
         });
-
-        if (!isValid) {
-            alert("Error: Please complete all required sections on this page before proceeding.");
-        }
+        if (!isValid) alert("Error: Please complete all required sections on this page before proceeding.");
         return isValid;
     }
 
     function updateSummary() {
-        const summaryFields = {
-            'review-name': 'full-name',
-            'review-year': 'tax-year',
-            'review-income': 'gross-income',
-            'review-withheld': 'tax-withheld'
-        };
+        const summaryFields = { 'review-name': 'full-name', 'review-year': 'tax-year', 'review-income': 'gross-income', 'review-withheld': 'tax-withheld' };
         for (const [displayId, inputId] of Object.entries(summaryFields)) {
             const displayEl = document.getElementById(displayId);
             const inputVal = document.getElementById(inputId)?.value;
@@ -192,17 +164,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('review-dependents').textContent = hasDep === 'yes' ? `${count} Dependents` : "None";
     }
 
-    // PIN Entry restrictions (Numbers only, Max 6)
-    [ui.mfaCodeInput, ui.resetCodeInput].forEach(input => {
+    // PIN Entry restrictions for all password and code fields
+    const pinFields = [ui.mfaCodeInput, ui.resetCodeInput, ui.regPass, ui.loginPass, ui.resetPass];
+    pinFields.forEach(input => {
         if (input) {
             input.oninput = (e) => {
                 e.target.value = e.target.value.replace(/[^0-9]/g, '');
                 if (ui.mfaErrorMsg) ui.mfaErrorMsg.style.display = 'none';
+                e.target.style.borderColor = "";
             };
         }
     });
-
-    // --- INTERFACE EVENTS ---
 
     if (ui.loginBtnTop) ui.loginBtnTop.onclick = () => openModal(ui.loginForm);
     if (ui.regBtnTop) ui.regBtnTop.onclick = () => openModal(ui.regForm);
@@ -211,65 +183,41 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.closeModalBtns.forEach(btn => {
         btn.onclick = (e) => { 
             e.preventDefault(); 
-            // Allow cancel only if NOT on the required MFA screen
-            if (ui.mfaForm.style.display !== 'block' || window.Auth.isAuthenticated()) {
-                closeModal(); 
-            } else {
-                alert("Security Note: Identity verification is required for access.");
-            }
+            if (ui.mfaForm.style.display !== 'block' || window.Auth.isAuthenticated()) closeModal(); 
+            else alert("Security Note: Identity verification is required for access.");
         };
     });
 
-    if (ui.forgotPasswordLink) {
-        ui.forgotPasswordLink.onclick = (e) => {
-            e.preventDefault();
-            showAuthForm(ui.forgotForm);
-        };
-    }
+    if (ui.forgotPasswordLink) ui.forgotPasswordLink.onclick = (e) => { e.preventDefault(); showAuthForm(ui.forgotForm); };
 
     if (ui.nextBtn) {
         ui.nextBtn.onclick = (e) => {
             e.preventDefault();
-            
-            // SECURITY GATE: User MUST be logged in to go to Step 2+
             if (!window.Auth.isAuthenticated()) {
                 alert("Identity Verification Required: Please sign in or create an account to proceed.");
                 openModal(ui.loginForm);
                 return;
             }
-
-            // VALIDATION: All current step fields must be filled
-            if (validateCurrentStep()) {
-                navigateToStep(currentStep + 1);
-            }
+            if (validateCurrentStep()) navigateToStep(currentStep + 1);
         };
     }
 
-    if (ui.prevBtn) {
-        ui.prevBtn.onclick = (e) => {
-            e.preventDefault();
-            if (currentStep > 1) navigateToStep(currentStep - 1);
-        };
-    }
+    if (ui.prevBtn) ui.prevBtn.onclick = (e) => { e.preventDefault(); if (currentStep > 1) navigateToStep(currentStep - 1); };
 
     if (ui.authModal) {
         ui.authModal.onclick = (e) => { 
             if (e.target === ui.authModal) {
-                if (ui.mfaForm.style.display !== 'block' || window.Auth.isAuthenticated()) {
-                    closeModal();
-                }
+                if (ui.mfaForm.style.display !== 'block' || window.Auth.isAuthenticated()) closeModal();
             }
         };
     }
-
-    // --- AUTH ACTIONS ---
 
     const btnLogAction = document.getElementById('btn-login');
     if (btnLogAction) {
         btnLogAction.onclick = async () => {
             const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            if (!email || !pass) return alert("Credentials missing.");
+            const pass = ui.loginPass.value;
+            if (!email || !pass || pass.length !== 6) return alert("6-digit PIN required.");
             try {
                 btnLogAction.disabled = true;
                 btnLogAction.textContent = "Processing...";
@@ -277,7 +225,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 pendingUserEmail = email;
                 authMode = "login";
                 showAuthForm(ui.mfaForm);
-            } catch (e) { alert(e.message); }
+            } catch (e) { 
+                alert(e.message); 
+                // Error happens, modal remains open
+            }
             finally { btnLogAction.disabled = false; btnLogAction.textContent = "Sign In"; }
         };
     }
@@ -286,9 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnRegAction) {
         btnRegAction.onclick = async () => {
             const email = document.getElementById('reg-email').value;
-            const pass = document.getElementById('reg-password').value;
+            const pass = ui.regPass.value;
             const name = document.getElementById('reg-name').value;
-            if (!email || !pass || !name) return alert("Required fields missing.");
+            if (!email || !pass || pass.length !== 6 || !name) return alert("Required fields missing or PIN invalid.");
             try {
                 btnRegAction.disabled = true;
                 btnRegAction.textContent = "Creating Account...";
@@ -296,7 +247,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 pendingUserEmail = email;
                 authMode = "register";
                 showAuthForm(ui.mfaForm);
-            } catch (e) { alert(e.message); }
+            } catch (e) { 
+                alert(e.message); 
+                // Error happens, modal remains open
+            }
             finally { btnRegAction.disabled = false; btnRegAction.textContent = "Register ID"; }
         };
     }
@@ -323,17 +277,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnResetSubmit) {
         btnResetSubmit.onclick = () => {
             const code = ui.resetCodeInput.value;
-            const newPass = document.getElementById('reset-password').value;
-            
+            const newPass = ui.resetPass.value;
             if (!code || code.length !== 6) return alert("Please enter the 6-digit PIN.");
-            if (!newPass) return alert("Please enter a new password.");
-
+            if (!newPass || newPass.length !== 6) return alert("Please enter a new 6-digit PIN password.");
             if (window.Auth.verifyMfa(pendingUserEmail, code)) {
                 const data = JSON.parse(localStorage.getItem('tax_user_' + pendingUserEmail.toLowerCase()));
                 if (data) {
                     data.password = newPass;
                     localStorage.setItem('tax_user_' + pendingUserEmail.toLowerCase(), JSON.stringify(data));
-                    alert("Success: Security PIN verified. Password has been updated. Please Sign In.");
+                    alert("Success: Password has been updated. Please Sign In.");
                     showAuthForm(ui.loginForm);
                 }
             } else { 
@@ -367,14 +319,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.refundForm) {
         ui.refundForm.onsubmit = (e) => {
             e.preventDefault();
-            if (!document.getElementById('consent').checked) {
-                return alert("Legal declaration consent is mandatory.");
-            }
+            if (!document.getElementById('consent').checked) return alert("Legal declaration consent is mandatory.");
             const income = parseFloat(document.getElementById('gross-income').value) || 0;
             const refund = (income * 0.12).toFixed(2);
             document.getElementById('display-refund-amount').textContent = refund;
             document.getElementById('display-app-id').textContent = 'US-T-' + Math.floor(100000 + Math.random() * 900000);
-            
             ui.refundForm.style.display = 'none';
             if (ui.progressBar) ui.progressBar.style.display = 'none';
             if (ui.portalTitle) ui.portalTitle.style.display = 'none';
@@ -382,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Logic for Dependent field visibility
     document.querySelectorAll('input[name="dependents"]').forEach(radio => {
         radio.onchange = () => {
             const box = document.getElementById('dep-count-box');
@@ -390,7 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     });
 
-    // Initialize the View
     updateUIState();
     navigateToStep(1);
 });
