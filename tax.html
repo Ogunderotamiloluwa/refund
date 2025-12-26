@@ -13,6 +13,82 @@
         .error-border { border: 2px solid #dc3545 !important; }
         .success-text { color: #28a745; font-weight: bold; }
 
+        /* Session Display Styling */
+        #user-session-display {
+            display: none;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #e7f3ef;
+            border: 1px solid #b2d8cd;
+            border-radius: 8px;
+            color: #1e463a;
+            font-size: 0.9rem;
+            text-align: left;
+            animation: fadeIn 0.5s ease;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+        }
+
+        /* 6-Digit PIN Input Styling */
+        .pin-input-container {
+            position: relative;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .styled-pin-input {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2.2rem;
+            letter-spacing: 0.8rem;
+            text-align: center;
+            padding-left: 0.8rem;
+            border: 2px solid #002868;
+            border-radius: 8px;
+            background: #fff;
+            color: #002868;
+            width: 240px;
+            height: 60px;
+            margin: 0 auto;
+            display: block;
+        }
+        .pin-error-text {
+            color: #d63031;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 10px;
+            display: none;
+            padding: 8px;
+            background: #fff5f5;
+            border-radius: 4px;
+        }
+
+        /* Logout Button Fix */
+        #btn-logout {
+            display: none;
+            margin-left: 8px;
+            background: #fff !important;
+            color: #dc3545 !important;
+            border: 1px solid #dc3545 !important;
+            font-weight: 600;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        #btn-logout:hover {
+            background: #dc3545 !important;
+            color: #fff !important;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
         /* MOBILE PLACEHOLDER SIZE FIX */
         @media (max-width: 480px) {
             input::placeholder {
@@ -24,11 +100,18 @@
 <body>
 
 <div class="form-container" role="main">
-    <div id="auth-controls" style="text-align:center; margin-bottom:20px; padding:10px; background:#e9ecef; border-radius:5px;">
-        <p style="font-size:0.8rem; margin-bottom:10px; color:#555;">SECURITY STATUS: ENCRYPTED CONNECTION ACTIVE</p>
+    <div id="auth-controls" style="text-align:center; margin-bottom:20px; padding:20px; background:#f1f3f5; border-radius:10px; border: 1px solid #dee2e6;">
+        <p style="font-size:0.7rem; margin-bottom:12px; color:#6c757d; letter-spacing: 1px; font-weight: bold;">SECURE GOVERNMENT ACCESS PORTAL</p>
+        
+        <!-- Email display at the top -->
+        <div id="user-session-display">
+            <span class="status-dot"></span>
+            Authenticated: <strong id="session-email-text"></strong>
+        </div>
+
         <button id="btn-show-login" class="btn btn-secondary" style="display:inline-block; margin-right:8px;">Portal Login</button>
         <button id="btn-show-register" class="btn btn-primary" style="display:inline-block;">Create Secure Account</button>
-        <a id="btn-logout" href="#" class="btn btn-secondary" style="display:none; margin-left:8px;">Log Out</a>
+        <a id="btn-logout" href="#" class="btn btn-secondary">Log Out</a>
     </div>
 
     <div id="auth-modal" class="modal" aria-hidden="true" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
@@ -87,25 +170,33 @@
 
                 <form id="reset-form" style="display:none;">
                     <label for="reset-email">Email</label>
-                    <input id="reset-email" type="email" required />
-                    <label for="reset-code">Verification Code</label>
-                    <input id="reset-code" type="text" inputmode="numeric" required />
-                    <label for="reset-password">New Password</label>
+                    <input id="reset-email" type="email" readonly />
+                    
+                    <div class="pin-input-container">
+                        <label for="reset-code" style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">VERIFICATION PIN</label>
+                        <input id="reset-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="------" />
+                    </div>
+
+                    <label for="reset-password">New Secure Password</label>
                     <input id="reset-password" type="password" required />
+                    
                     <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset</button>
+                        <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset Password</button>
                         <button id="btn-reset-cancel" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
 
                 <form id="mfa-form" style="display:none; text-align:center;">
                     <div style="background:#f0f7ff; padding:15px; border-radius:5px; margin-bottom:15px;">
-                        <p style="font-size:0.9rem;">Identity confirmed. Enter the 6-digit PIN sent to your email to continue.</p>
+                        <p style="font-size:0.9rem; color:#2c3e50;">Identity confirmed. Enter the 6-digit PIN sent to your email to authorize your portal session.</p>
                     </div>
-                    <label for="mfa-code">6-Digit PIN</label>
-                    <input id="mfa-code" type="text" maxlength="6" style="text-align:center; font-size:1.5rem; letter-spacing:5px;" />
-                    <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%;">Authorize Session</button>
+                    <div class="pin-input-container">
+                        <label for="mfa-code" style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">SECURE PIN ENTRY</label>
+                        <input id="mfa-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="------" />
+                        <div id="mfa-error-msg" class="pin-error-text">Error: The PIN entered is incorrect. Please check your email.</div>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%; height:50px; font-size:1.1rem;">Validate PIN</button>
                     </div>
                 </form>
             </div>
@@ -129,14 +220,13 @@
                 <label for="tax-year">Select Tax Filing Period *</label>
                 <select id="tax-year" name="taxYear" required>
                     <option value="">Choose Year...</option>
-                    <option value="2024">Tax Year 2026 (Current)</option>
-                    <option value="2024">Tax Year 2025 </option>
+                    <option value="2026">Tax Year 2026 (Current)</option>
+                    <option value="2025">Tax Year 2025 </option>
                     <option value="2024">Tax Year 2024 </option>
                     <option value="2023">Tax Year 2023</option>
                     <option value="2022">Tax Year 2022</option>
                     <option value="2021">Tax Year 2021</option>
                     <option value="2020">Tax Year 2020</option>
-                    
                 </select>
             </div>
             <div class="form-group">
@@ -275,11 +365,9 @@
         <button onclick="window.location.reload()" class="btn btn-primary" style="padding:15px 40px;">Return to Portal Home</button>
     </div>
 </div>
-<!-- Load auth.js first -->
-<script src="auth.js" type="module"></script>
 
-<!-- Then load your main logic -->
-<script src="tax.js" type="module"></script>
+<script src="auth.js"></script>
+<script src="tax.js"></script>
 
 </body>
 </html>

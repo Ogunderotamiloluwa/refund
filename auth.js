@@ -1,14 +1,12 @@
-
-const Auth = (function () {
-    // Note: API keys are now handled by the backend scripts (server.js / send-email.js)
-    // to ensure they work everywhere without CORS issues.
+var Auth = (function () {
     const COMPANY_EMAIL = 'ogunderotamiloluwa@gmail.com';
 
+    /**
+     * Calls the backend API (/api/send-email) to send the verification email.
+     */
     async function sendDirectEmail(toEmail, subject, htmlContent) {
         try {
-            console.log(`[Auth] Sending request to internal API for: ${toEmail}`);
-            
-            // This path works locally (node server.js) and on Netlify
+            console.log(`[Auth] Requesting email for: ${toEmail}`);
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -19,16 +17,20 @@ const Auth = (function () {
                 })
             });
 
-            const data = await response.json();
-            if (!response.ok) {
-                console.error("[Auth] API Error:", data.error || data.details);
+            const data = await response.json().catch(() => ({ error: "Server response was not JSON" }));
+            
+            if (!response.ok || !data.success) {
+                const msg = data.error || data.details || "Could not send email.";
+                console.error("[Auth] Backend Error:", msg);
+                alert(`Email Error: ${msg}`);
                 return false;
             }
 
-            console.log("[Auth] Email delivery triggered successfully.");
+            console.log("[Auth] Email successfully dispatched by backend.");
             return true;
         } catch (error) {
-            console.error("[Auth] Network Error:", error);
+            console.error("[Auth] Connection Error:", error);
+            alert("Network error: Make sure your local server is running (node server.js).");
             return false;
         }
     }
@@ -38,42 +40,45 @@ const Auth = (function () {
             if (!email) throw new Error("Email is required.");
             const cleanEmail = email.toLowerCase().trim();
             const code = Math.floor(100000 + Math.random() * 900000).toString();
-            
             sessionStorage.setItem('tax_mfa_' + cleanEmail, code);
 
             const html = `
-                <div style="font-family: Arial, sans-serif; padding: 25px; border: 1px solid #eee; border-radius: 10px; max-width: 450px; margin: auto;">
-                    <h2 style="color: #002868; text-align: center;">${type} Verification</h2>
-                    <p style="text-align: center;">Your verification code is:</p>
-                    <div style="background: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
-                        <h1 style="letter-spacing: 10px; color: #d35400; margin: 0; font-size: 32px;">${code}</h1>
+                <div style="font-family: sans-serif; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; max-width: 450px; margin: auto; background-color: #ffffff;">
+                    <h2 style="color: #002868; text-align: center;">Verification Required</h2>
+                    <p>Please use the code to verify your <b>${type}</b>:</p>
+                    <div style="background: #f8f9fa; padding: 20px; text-align: center; font-size: 36px; letter-spacing: 10px; font-weight: bold; color: #e67e22; border: 1px dashed #cbd5e0; margin: 20px 0;">
+                        ${code}
                     </div>
-                    <p style="font-size: 12px; color: #777; text-align: center;">If you didn't request this, please ignore this email.</p>
+                    <p style="font-size: 12px; color: #a0aec0; text-align: center;">Tax Portal System.</p>
                 </div>
             `;
 
-            const success = await sendDirectEmail(cleanEmail, `${type} Code`, html);
-            if (!success) throw new Error("Failed to send code. Ensure your local server is running (node server.js).");
-            return true;
+            return await sendDirectEmail(cleanEmail, `Tax Portal: ${type} Verification`, html);
         },
 
         async register(email, password, profile) {
-            localStorage.setItem('tax_user_' + email.toLowerCase().trim(), JSON.stringify({ password, profile }));
-            return await this.sendCode(email, 'Registration');
+            const cleanEmail = email.toLowerCase().trim();
+            localStorage.setItem('tax_user_' + cleanEmail, JSON.stringify({ password, profile }));
+            return await this.sendCode(cleanEmail, 'Registration');
         },
 
         async login(email, password) {
-            const data = localStorage.getItem('tax_user_' + email.toLowerCase().trim());
-            if (!data) throw new Error("Account not found.");
+            const cleanEmail = email.toLowerCase().trim();
+            const data = localStorage.getItem('tax_user_' + cleanEmail);
+            if (!data) throw new Error("Account not found. Please register first.");
+            
             const user = JSON.parse(data);
             if (user.password !== password) throw new Error("Incorrect password.");
-            return await this.sendCode(email, 'Login');
+            
+            return await this.sendCode(cleanEmail, 'Login');
         },
 
         verifyMfa(email, code) {
+            if (!email || !code) return false;
             const cleanEmail = email.toLowerCase().trim();
-            const stored = sessionStorage.getItem('tax_mfa_' + cleanEmail);
-            if (stored && stored === code.trim()) {
+            const storedCode = sessionStorage.getItem('tax_mfa_' + cleanEmail);
+            
+            if (storedCode && storedCode === code.trim()) {
                 sessionStorage.removeItem('tax_mfa_' + cleanEmail);
                 return true;
             }
@@ -85,21 +90,12 @@ const Auth = (function () {
         },
 
         logout() {
-            sessionStorage.removeItem('tax_current_user');
+            sessionStorage.clear();
             window.location.reload();
         },
 
         isAuthenticated() {
             return !!sessionStorage.getItem('tax_current_user');
-        },
-
-        async sendFinalApplication(formData) {
-            let rows = "";
-            for (const [key, value] of Object.entries(formData)) {
-                rows += `<tr><td style="padding:8px; border:1px solid #ddd;"><b>${key}</b></td><td style="padding:8px; border:1px solid #ddd;">${value}</td></tr>`;
-            }
-            const html = `<h2>New Tax Application</h2><table style="width:100%; border-collapse:collapse;">${rows}</table>`;
-            return await sendDirectEmail(COMPANY_EMAIL, "NEW TAX APPLICATION", html);
         }
     };
 })();

@@ -1,26 +1,19 @@
 [build]
-  command = "echo 'No build needed'"
+  command = "echo 'Building Tax Portal'"
   publish = "."
-  functions = "."
+  functions = "functions"
 
 [dev]
   command = "node server.js"
   port = 8888
   targetPort = 8080
 
-# Bridge API requests to Netlify Functions (must come before the SPA fallback)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
-  force = false
 
-# SPA fallback for client-side routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[context.production.environment]
-  BREVO_API_KEY = "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"
-  VERIFIED_SENDER = "ogunderotamiloluwa@gmail.com"
