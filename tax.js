@@ -21,7 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         loginBtnTop: document.getElementById('btn-show-login'),
         regBtnTop: document.getElementById('btn-show-register'),
-        logoutBtnTop: document.getElementById('btn-logout'),
+        logoutBtnTop: document.getElementById('btn-logout-top'),
+        authBtnsInitial: document.getElementById('auth-buttons-initial'),
         
         refundForm: document.getElementById('refund-form'),
         progressBar: document.getElementById('progress-bar'),
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (ui.loginBtnTop) ui.loginBtnTop.style.display = isAuth ? 'none' : 'inline-block';
         if (ui.regBtnTop) ui.regBtnTop.style.display = isAuth ? 'none' : 'inline-block';
-        if (ui.logoutBtnTop) ui.logoutBtnTop.style.display = isAuth ? 'inline-block' : 'none';
+        if (ui.authBtnsInitial) ui.authBtnsInitial.style.display = isAuth ? 'none' : 'block';
         
         if (isAuth && currentUser) {
             if (sessionDisplay) sessionDisplay.style.display = 'block';
@@ -178,8 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (ui.loginBtnTop) ui.loginBtnTop.onclick = () => openModal(ui.loginForm);
     if (ui.regBtnTop) ui.regBtnTop.onclick = () => openModal(ui.regForm);
-    if (ui.logoutBtnTop) ui.logoutBtnTop.onclick = (e) => { e.preventDefault(); window.Auth.logout(); };
-
+    
     ui.closeModalBtns.forEach(btn => {
         btn.onclick = (e) => { 
             e.preventDefault(); 
@@ -227,7 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showAuthForm(ui.mfaForm);
             } catch (e) { 
                 alert(e.message); 
-                // Error happens, modal remains open
             }
             finally { btnLogAction.disabled = false; btnLogAction.textContent = "Sign In"; }
         };
@@ -249,7 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showAuthForm(ui.mfaForm);
             } catch (e) { 
                 alert(e.message); 
-                // Error happens, modal remains open
             }
             finally { btnRegAction.disabled = false; btnRegAction.textContent = "Register ID"; }
         };

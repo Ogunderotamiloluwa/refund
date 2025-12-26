@@ -1,6 +1,5 @@
-var Auth = (function () {
-    const COMPANY_EMAIL = 'ogunderotamiloluwa@gmail.com';
 
+var Auth = (function () {
     /**
      * Calls the backend API (/api/send-email) to send the verification email.
      */
@@ -30,7 +29,7 @@ var Auth = (function () {
             return true;
         } catch (error) {
             console.error("[Auth] Connection Error:", error);
-            alert("Network error: Make sure your local server is running (node server.js).");
+            alert("Network error: Make sure your server is running.");
             return false;
         }
     }
@@ -45,11 +44,14 @@ var Auth = (function () {
             const html = `
                 <div style="font-family: sans-serif; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; max-width: 450px; margin: auto; background-color: #ffffff;">
                     <h2 style="color: #002868; text-align: center;">Verification Required</h2>
-                    <p>Please use the code to verify your <b>${type}</b>:</p>
-                    <div style="background: #f8f9fa; padding: 20px; text-align: center; font-size: 36px; letter-spacing: 10px; font-weight: bold; color: #e67e22; border: 1px dashed #cbd5e0; margin: 20px 0;">
+                    <p style="font-size: 16px;">Hello,</p>
+                    <p style="font-size: 16px;">Please use the following code to verify your <b>${type}</b> on the Tax Portal System:</p>
+                    <div style="background: #f8f9fa; padding: 20px; text-align: center; font-size: 36px; letter-spacing: 10px; font-weight: bold; color: #e67e22; border: 1px dashed #cbd5e0; margin: 25px 0;">
                         ${code}
                     </div>
-                    <p style="font-size: 12px; color: #a0aec0; text-align: center;">Tax Portal System.</p>
+                    <p style="font-size: 12px; color: #a0aec0; text-align: center;">This code will expire in 10 minutes.</p>
+                    <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 30px 0;">
+                    <p style="font-size: 12px; color: #a0aec0; text-align: center;">&copy; Tax Portal System. All rights reserved.</p>
                 </div>
             `;
 
