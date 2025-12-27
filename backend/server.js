@@ -97,11 +97,11 @@ async function handleRequest(req, res) {
         return;
     }
 
-    // Static File Serving - Defaults to your provided index.html
+    // Static File Serving - Explicitly serving index.html as the first page
     let reqPath = (url.pathname === '/' || url.pathname === '') ? '/index.html' : url.pathname;
     let filePath = path.join(__dirname, '..', reqPath);
 
-    // Fallback to index.html for SPA behavior or if file not found at path
+    // Fallback to index.html if file not found (Standard for SPA deployment on Render)
     if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
         filePath = path.join(__dirname, '..', 'index.html');
     }
@@ -128,7 +128,8 @@ const PORT = process.env.PORT || 10000;
 http.createServer(handleRequest).listen(PORT, () => {
     console.log(`==============================================`);
     console.log(`TAX PORTAL BACKEND ACTIVE`);
-    console.log(`PORT: ${PORT}`);
     console.log(`LANDING PAGE: index.html`);
+    console.log(`SENDER: ${VERIFIED_SENDER}`);
+    console.log(`API KEY LOADED: ${BREVO_API_KEY ? 'Yes' : 'No'}`);
     console.log(`==============================================`);
 });
