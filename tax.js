@@ -8,9 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pendingUserEmail = "";
     let authMode = ""; 
     let currentStep = 1;
-    let lastFocusedElement = null;
 
-    // UI Element Mapping
     const ui = {
         authModal: document.getElementById('auth-modal'),
         loginForm: document.getElementById('login-form'),
@@ -39,14 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
         finalPage: document.getElementById('final-results-page'),
 
         mfaCodeInput: document.getElementById('mfa-code'),
-        resetCodeInput: document.getElementById('reset-code'),
         mfaErrorMsg: document.getElementById('mfa-error-msg'),
         mfaVerifyBtn: document.getElementById('btn-verify-mfa'),
 
-        // PIN-styled password fields
         regPass: document.getElementById('reg-password'),
         loginPass: document.getElementById('login-password'),
-        resetPass: document.getElementById('reset-password')
+        resetPass: document.getElementById('reset-password'),
+        resetCodeInput: document.getElementById('reset-code')
     };
 
     function updateUIState() {
@@ -61,8 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ui.authBtnsInitial) ui.authBtnsInitial.style.display = isAuth ? 'none' : 'block';
         
         if (isAuth && currentUser) {
-            if (sessionDisplay) sessionDisplay.style.display = 'block';
-            if (emailText) emailText.textContent = currentUser;
+            if (sessionDisplay) {
+                sessionDisplay.style.display = 'flex';
+                if (emailText) emailText.textContent = currentUser;
+            }
         } else {
             if (sessionDisplay) sessionDisplay.style.display = 'none';
         }
@@ -75,46 +74,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showAuthForm(formElement) {
-        const forms = [ui.loginForm, ui.regForm, ui.mfaForm, ui.forgotForm, ui.resetForm];
-        forms.forEach(f => { if(f) f.style.display = 'none'; });
-        if (formElement) {
-            formElement.style.display = 'block';
-            const firstInput = formElement.querySelector('input:not([readonly])');
-            if (firstInput) setTimeout(() => firstInput.focus(), 100);
-        }
+        [ui.loginForm, ui.regForm, ui.mfaForm, ui.forgotForm, ui.resetForm].forEach(f => {
+            if(f) f.style.display = 'none';
+        });
+        if (formElement) formElement.style.display = 'block';
     }
 
     function openModal(specificForm) {
         if (ui.authModal) {
-            lastFocusedElement = document.activeElement;
             ui.authModal.style.display = 'flex';
-            ui.authModal.removeAttribute('aria-hidden'); 
             showAuthForm(specificForm);
         }
     }
 
     function closeModal() {
-        if (ui.mfaForm && ui.mfaForm.style.display === 'block' && !window.Auth.isAuthenticated()) {
-            return; 
-        }
-        if (ui.authModal) {
-            if (lastFocusedElement) lastFocusedElement.focus();
-            ui.authModal.style.display = 'none';
-            ui.authModal.setAttribute('aria-hidden', 'true');
-        }
-        const inputs = ui.authModal ? ui.authModal.querySelectorAll('input') : [];
-        inputs.forEach(i => { 
-            if (!i.readOnly) i.value = ""; 
-            i.style.borderColor = ""; 
-        });
-        if (ui.mfaErrorMsg) ui.mfaErrorMsg.style.display = 'none';
+        if (ui.mfaForm && ui.mfaForm.style.display === 'block' && !window.Auth.isAuthenticated()) return;
+        if (ui.authModal) ui.authModal.style.display = 'none';
     }
 
+    // Only MFA codes are restricted to numeric PIN entry
+    [ui.mfaCodeInput, ui.resetCodeInput].forEach(input => {
+        if (input) {
+            input.oninput = (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            };
+        }
+    });
+
+    if (ui.loginBtnTop) ui.loginBtnTop.onclick = () => openModal(ui.loginForm);
+    if (ui.regBtnTop) ui.regBtnTop.onclick = () => openModal(ui.regForm);
+    
+    ui.closeModalBtns.forEach(btn => {
+        btn.onclick = (e) => { 
+            e.preventDefault(); 
+            closeModal();
+        };
+    });
+
+    if (ui.forgotPasswordLink) ui.forgotPasswordLink.onclick = (e) => { e.preventDefault(); showAuthForm(ui.forgotForm); };
+
+    if (ui.nextBtn) {
+        ui.nextBtn.onclick = (e) => {
+            e.preventDefault();
+            if (!window.Auth.isAuthenticated()) {
+                alert("Identity Verification Required: Please sign in to proceed.");
+                openModal(ui.loginForm);
+                return;
+            }
+            if (validateCurrentStep()) navigateToStep(currentStep + 1);
+        };
+    }
+
+    if (ui.prevBtn) ui.prevBtn.onclick = (e) => { e.preventDefault(); if (currentStep > 1) navigateToStep(currentStep - 1); };
+
     function navigateToStep(stepNum) {
-        if (!ui.formSections.length) return;
-        ui.formSections.forEach(sec => {
-            sec.style.display = (parseInt(sec.dataset.step) === stepNum) ? 'block' : 'none';
-        });
+        ui.formSections.forEach(sec => sec.style.display = (parseInt(sec.dataset.step) === stepNum) ? 'block' : 'none');
         ui.progressBarSteps.forEach(step => {
             const sNum = parseInt(step.dataset.step);
             step.classList.toggle('active', sNum === stepNum);
@@ -134,173 +148,60 @@ document.addEventListener('DOMContentLoaded', () => {
         const requiredInputs = currentSection.querySelectorAll('input[required], select[required]');
         let isValid = true;
         requiredInputs.forEach(input => {
-            let fieldValid = true;
-            if (input.type === 'radio') {
-                const name = input.name;
-                const checked = currentSection.querySelector(`input[name="${name}"]:checked`);
-                if (!checked) fieldValid = false;
-            } else if (!input.value.trim()) {
-                fieldValid = false;
-            }
-            if (!fieldValid) {
+            if (!input.value.trim() && input.type !== 'radio') {
                 isValid = false;
                 input.classList.add('error-border');
+            } else if (input.type === 'radio') {
+                const name = input.name;
+                if (!currentSection.querySelector(`input[name="${name}"]:checked`)) isValid = false;
             } else {
                 input.classList.remove('error-border');
             }
         });
-        if (!isValid) alert("Error: Please complete all required sections on this page before proceeding.");
+        if (!isValid) alert("Error: Required fields are missing.");
         return isValid;
     }
 
     function updateSummary() {
-        const summaryFields = { 'review-name': 'full-name', 'review-year': 'tax-year', 'review-income': 'gross-income', 'review-withheld': 'tax-withheld' };
-        for (const [displayId, inputId] of Object.entries(summaryFields)) {
-            const displayEl = document.getElementById(displayId);
-            const inputVal = document.getElementById(inputId)?.value;
-            if (displayEl) displayEl.textContent = inputVal || "---";
+        const fields = { 'review-name': 'full-name', 'review-year': 'tax-year', 'review-income': 'gross-income', 'review-withheld': 'tax-withheld' };
+        for (const [displayId, inputId] of Object.entries(fields)) {
+            const el = document.getElementById(displayId);
+            if (el) el.textContent = document.getElementById(inputId)?.value || "---";
         }
-        const hasDep = document.querySelector('input[name="dependents"]:checked')?.value || "no";
-        const count = document.getElementById('dependents-count').value;
-        document.getElementById('review-dependents').textContent = hasDep === 'yes' ? `${count} Dependents` : "None";
     }
 
-    // PIN Entry restrictions for all password and code fields
-    const pinFields = [ui.mfaCodeInput, ui.resetCodeInput, ui.regPass, ui.loginPass, ui.resetPass];
-    pinFields.forEach(input => {
-        if (input) {
-            input.oninput = (e) => {
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
-                if (ui.mfaErrorMsg) ui.mfaErrorMsg.style.display = 'none';
-                e.target.style.borderColor = "";
-            };
-        }
-    });
+    document.getElementById('btn-login').onclick = async () => {
+        const email = document.getElementById('login-email').value;
+        const pass = ui.loginPass.value;
+        if (!email || pass.length < 8) return alert("Credentials required. Password must be at least 8 characters.");
+        try {
+            await window.Auth.login(email, pass);
+            pendingUserEmail = email;
+            authMode = "login";
+            showAuthForm(ui.mfaForm);
+        } catch (e) { alert(e.message); }
+    };
 
-    if (ui.loginBtnTop) ui.loginBtnTop.onclick = () => openModal(ui.loginForm);
-    if (ui.regBtnTop) ui.regBtnTop.onclick = () => openModal(ui.regForm);
-    
-    ui.closeModalBtns.forEach(btn => {
-        btn.onclick = (e) => { 
-            e.preventDefault(); 
-            if (ui.mfaForm.style.display !== 'block' || window.Auth.isAuthenticated()) closeModal(); 
-            else alert("Security Note: Identity verification is required for access.");
-        };
-    });
-
-    if (ui.forgotPasswordLink) ui.forgotPasswordLink.onclick = (e) => { e.preventDefault(); showAuthForm(ui.forgotForm); };
-
-    if (ui.nextBtn) {
-        ui.nextBtn.onclick = (e) => {
-            e.preventDefault();
-            if (!window.Auth.isAuthenticated()) {
-                alert("Identity Verification Required: Please sign in or create an account to proceed.");
-                openModal(ui.loginForm);
-                return;
-            }
-            if (validateCurrentStep()) navigateToStep(currentStep + 1);
-        };
-    }
-
-    if (ui.prevBtn) ui.prevBtn.onclick = (e) => { e.preventDefault(); if (currentStep > 1) navigateToStep(currentStep - 1); };
-
-    if (ui.authModal) {
-        ui.authModal.onclick = (e) => { 
-            if (e.target === ui.authModal) {
-                if (ui.mfaForm.style.display !== 'block' || window.Auth.isAuthenticated()) closeModal();
-            }
-        };
-    }
-
-    const btnLogAction = document.getElementById('btn-login');
-    if (btnLogAction) {
-        btnLogAction.onclick = async () => {
-            const email = document.getElementById('login-email').value;
-            const pass = ui.loginPass.value;
-            if (!email || !pass || pass.length !== 6) return alert("6-digit PIN required.");
-            try {
-                btnLogAction.disabled = true;
-                btnLogAction.textContent = "Processing...";
-                await window.Auth.login(email, pass);
-                pendingUserEmail = email;
-                authMode = "login";
-                showAuthForm(ui.mfaForm);
-            } catch (e) { 
-                alert(e.message); 
-            }
-            finally { btnLogAction.disabled = false; btnLogAction.textContent = "Sign In"; }
-        };
-    }
-
-    const btnRegAction = document.getElementById('btn-register');
-    if (btnRegAction) {
-        btnRegAction.onclick = async () => {
-            const email = document.getElementById('reg-email').value;
-            const pass = ui.regPass.value;
-            const name = document.getElementById('reg-name').value;
-            if (!email || !pass || pass.length !== 6 || !name) return alert("Required fields missing or PIN invalid.");
-            try {
-                btnRegAction.disabled = true;
-                btnRegAction.textContent = "Creating Account...";
-                await window.Auth.register(email, pass, { name });
-                pendingUserEmail = email;
-                authMode = "register";
-                showAuthForm(ui.mfaForm);
-            } catch (e) { 
-                alert(e.message); 
-            }
-            finally { btnRegAction.disabled = false; btnRegAction.textContent = "Register ID"; }
-        };
-    }
-
-    const btnForgotSend = document.getElementById('btn-forgot-send');
-    if (btnForgotSend) {
-        btnForgotSend.onclick = async () => {
-            const email = document.getElementById('forgot-email').value;
-            if (!email) return alert("Recovery email missing.");
-            try {
-                btnForgotSend.disabled = true;
-                btnForgotSend.textContent = "Processing...";
-                await window.Auth.sendCode(email, "Recovery");
-                pendingUserEmail = email;
-                authMode = "reset";
-                document.getElementById('reset-email').value = email;
-                showAuthForm(ui.resetForm);
-            } catch (e) { alert(e.message); }
-            finally { btnForgotSend.disabled = false; btnForgotSend.textContent = "Send Verification Code"; }
-        };
-    }
-
-    const btnResetSubmit = document.getElementById('btn-reset-submit');
-    if (btnResetSubmit) {
-        btnResetSubmit.onclick = () => {
-            const code = ui.resetCodeInput.value;
-            const newPass = ui.resetPass.value;
-            if (!code || code.length !== 6) return alert("Please enter the 6-digit PIN.");
-            if (!newPass || newPass.length !== 6) return alert("Please enter a new 6-digit PIN password.");
-            if (window.Auth.verifyMfa(pendingUserEmail, code)) {
-                const data = JSON.parse(localStorage.getItem('tax_user_' + pendingUserEmail.toLowerCase()));
-                if (data) {
-                    data.password = newPass;
-                    localStorage.setItem('tax_user_' + pendingUserEmail.toLowerCase(), JSON.stringify(data));
-                    alert("Success: Password has been updated. Please Sign In.");
-                    showAuthForm(ui.loginForm);
-                }
-            } else { 
-                alert("Error: Security PIN is incorrect."); 
-                ui.resetCodeInput.style.borderColor = '#d63031';
-            }
-        };
-    }
+    document.getElementById('btn-register').onclick = async () => {
+        const email = document.getElementById('reg-email').value;
+        const pass = ui.regPass.value;
+        const name = document.getElementById('reg-name').value;
+        if (!email || pass.length < 8 || !name) return alert("Please complete all registration fields.");
+        try {
+            await window.Auth.register(email, pass, { name });
+            pendingUserEmail = email;
+            authMode = "register";
+            showAuthForm(ui.mfaForm);
+        } catch (e) { alert(e.message); }
+    };
 
     if (ui.mfaVerifyBtn) {
         ui.mfaVerifyBtn.onclick = () => {
             const code = ui.mfaCodeInput.value;
             if (window.Auth.verifyMfa(pendingUserEmail, code)) {
                 if (authMode === "register") {
-                    alert("Identity Verified! Registration complete. Please Sign In.");
+                    alert("Account Verified! Please Sign In.");
                     showAuthForm(ui.loginForm);
-                    ui.mfaCodeInput.value = "";
                 } else {
                     window.Auth.setSession(pendingUserEmail);
                     closeModal();
@@ -309,7 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 if (ui.mfaErrorMsg) ui.mfaErrorMsg.style.display = 'block';
-                ui.mfaCodeInput.style.borderColor = '#d63031';
             }
         };
     }
@@ -317,11 +217,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.refundForm) {
         ui.refundForm.onsubmit = (e) => {
             e.preventDefault();
-            if (!document.getElementById('consent').checked) return alert("Legal declaration consent is mandatory.");
+            if (!document.getElementById('consent').checked) return alert("Final consent is required.");
             const income = parseFloat(document.getElementById('gross-income').value) || 0;
-            const refund = (income * 0.12).toFixed(2);
-            document.getElementById('display-refund-amount').textContent = refund;
-            document.getElementById('display-app-id').textContent = 'US-T-' + Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('display-refund-amount').textContent = (income * 0.12).toFixed(2);
+            document.getElementById('display-app-id').textContent = 'TAX-' + Math.floor(100000 + Math.random() * 900000);
             ui.refundForm.style.display = 'none';
             if (ui.progressBar) ui.progressBar.style.display = 'none';
             if (ui.portalTitle) ui.portalTitle.style.display = 'none';
@@ -337,5 +236,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateUIState();
-    navigateToStep(1);
 });

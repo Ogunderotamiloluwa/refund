@@ -4,10 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-/**
- * Simple .env loader for local development.
- * On Render, these variables are pulled from the Dashboard Environment section.
- */
+// Local .env parser - only used for local development
 try {
     const envPath = path.join(__dirname, '..', '.env');
     if (fs.existsSync(envPath)) {
@@ -17,28 +14,27 @@ try {
             if (key && val.length > 0) process.env[key.trim()] = val.join('=').trim();
         });
     }
-} catch (e) { console.warn('[INFO] .env file not found locally. Using system environment variables.'); }
+} catch (e) { 
+    console.warn('[INFO] .env not found. Using system environment variables (standard for Render).'); 
+}
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const VERIFIED_SENDER = process.env.VERIFIED_SENDER || 'ogunderotamiloluwa@gmail.com';
 
-/**
- * Sends email via Brevo SMTP API v3
- */
 function sendBrevoEmail({ to, subject, html }) {
     return new Promise((resolve, reject) => {
         if (!BREVO_API_KEY) {
-            return reject(new Error("Internal Configuration Error: BREVO_API_KEY is missing."));
+            return reject(new Error("Missing BREVO_API_KEY in environment variables."));
         }
 
         const payload = JSON.stringify({
-            sender: { email: VERIFIED_SENDER, name: "Federal Tax Portal Support" },
+            sender: { email: VERIFIED_SENDER, name: "Federal Tax Portal" },
             to: [{ email: to }],
             subject: subject,
             htmlContent: html
         });
 
-        const options = {
+        const req = https.request({
             hostname: 'api.brevo.com',
             path: '/v3/smtp/email',
             method: 'POST',
@@ -47,16 +43,14 @@ function sendBrevoEmail({ to, subject, html }) {
                 'api-key': BREVO_API_KEY,
                 'Content-Length': Buffer.byteLength(payload)
             }
-        };
-
-        const req = https.request(options, (res) => {
+        }, (res) => {
             let body = '';
             res.on('data', chunk => body += chunk);
             res.on('end', () => {
                 if (res.statusCode >= 200 && res.statusCode < 300) {
                     resolve();
                 } else {
-                    console.error(`[BREVO ERROR] Status: ${res.statusCode} | Body: ${body}`);
+                    console.error(`[BREVO ERROR] Code: ${res.statusCode} | Body: ${body}`);
                     reject(new Error(`Email Provider Error: ${res.statusCode}`));
                 }
             });
@@ -81,7 +75,7 @@ const mimeTypes = {
 async function handleRequest(req, res) {
     const url = new URL(req.url, `http://${req.headers.host}`);
     
-    // API Endpoint
+    // API Route for sending emails
     if (url.pathname === '/api/send-email' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
@@ -95,7 +89,7 @@ async function handleRequest(req, res) {
                 });
                 res.end(JSON.stringify({ success: true }));
             } catch (err) {
-                console.error("[SERVER API ERROR]", err.message);
+                console.error("[SERVER ERROR]", err.message);
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, error: err.message }));
             }
@@ -104,11 +98,10 @@ async function handleRequest(req, res) {
     }
 
     // Static File Serving
-    // Default to index.html for root path "/"
     let reqPath = url.pathname === '/' ? '/index.html' : url.pathname;
     let filePath = path.join(__dirname, '..', reqPath);
 
-    // If file doesn't exist, serve index.html (Standard SPA behavior)
+    // Serve index.html if the requested path is not found (SPA behavior)
     if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
         filePath = path.join(__dirname, '..', 'index.html');
     }
@@ -119,7 +112,7 @@ async function handleRequest(req, res) {
     fs.readFile(filePath, (err, data) => {
         if (err) {
             res.writeHead(404);
-            res.end("404 - Not Found");
+            res.end("Not Found");
             return;
         }
         res.writeHead(200, { 
@@ -130,12 +123,12 @@ async function handleRequest(req, res) {
     });
 }
 
-// Render uses process.env.PORT, fallback to 10000
 const PORT = process.env.PORT || 10000;
 http.createServer(handleRequest).listen(PORT, () => {
-    console.log(`\n==============================================`);
-    console.log(`FEDERAL TAX PORTAL - PRODUCTION SERVER`);
+    console.log(`==============================================`);
+    console.log(`TAX PORTAL BACKEND ACTIVE`);
     console.log(`URL: http://localhost:${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'Development'}`);
-    console.log(`==============================================\n`);
+    console.log(`Sender: ${VERIFIED_SENDER}`);
+    console.log(`API Key Loaded: ${BREVO_API_KEY ? 'Yes' : 'No'}`);
+    console.log(`==============================================`);
 });

