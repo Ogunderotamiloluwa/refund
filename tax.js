@@ -224,6 +224,57 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) { alert(e.message); }
     };
 
+    // Forgot-password: send verification code and show reset form
+    const forgotSendBtn = document.getElementById('btn-forgot-send');
+    if (forgotSendBtn) {
+        forgotSendBtn.onclick = async () => {
+            const email = document.getElementById('forgot-email').value;
+            if (!email) return alert('Please enter your recovery email.');
+            try {
+                const ok = await window.Auth.sendCode(email, 'Password Reset');
+                if (ok) {
+                    pendingUserEmail = email;
+                    // populate reset email and show reset form
+                    const resetEmailEl = document.getElementById('reset-email');
+                    if (resetEmailEl) resetEmailEl.value = email;
+                    showAuthForm(ui.resetForm);
+                    // focus the reset code input
+                    setTimeout(() => { try { ui.resetCodeInput.focus(); } catch (e) {} }, 30);
+                }
+            } catch (e) { alert(e.message || 'Unable to send verification code.'); }
+        };
+    }
+
+    // Reset-password: verify code (server-side code already saved in sessionStorage by Auth.sendCode)
+    const resetSubmitBtn = document.getElementById('btn-reset-submit');
+    if (resetSubmitBtn) {
+        resetSubmitBtn.onclick = () => {
+            const code = ui.resetCodeInput.value;
+            const newPass = ui.resetPass.value;
+            const alnum = /^[A-Za-z0-9]+$/;
+            if (!code || code.length < 6) return alert('Please enter the 6-digit verification code.');
+            if (!newPass || newPass.length < 8 || !alnum.test(newPass)) return alert('New password must be at least 8 characters and alphanumeric.');
+            if (window.Auth.verifyMfa(pendingUserEmail, code)) {
+                // update stored password for the account (if exists)
+                try {
+                    const key = 'tax_user_' + pendingUserEmail.toLowerCase().trim();
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        const obj = JSON.parse(data);
+                        obj.password = newPass;
+                        localStorage.setItem(key, JSON.stringify(obj));
+                        alert('Password reset successful. Please sign in.');
+                        showAuthForm(ui.loginForm);
+                    } else {
+                        alert('Account not found.');
+                    }
+                } catch (e) { alert('Unable to reset password.'); }
+            } else {
+                alert('Invalid verification code.');
+            }
+        };
+    }
+
     if (ui.mfaVerifyBtn) {
         ui.mfaVerifyBtn.onclick = () => {
             const code = ui.mfaCodeInput.value;
