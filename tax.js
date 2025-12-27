@@ -83,13 +83,37 @@ document.addEventListener('DOMContentLoaded', () => {
     function openModal(specificForm) {
         if (ui.authModal) {
             ui.authModal.style.display = 'flex';
+            ui.authModal.setAttribute('aria-hidden', 'false');
             showAuthForm(specificForm);
+            // Move focus into the modal to the first focusable element
+            setTimeout(() => {
+                try {
+                    const first = (specificForm && specificForm.querySelector) ? specificForm.querySelector('input, button, [tabindex]') : null;
+                    if (first) first.focus();
+                } catch (e) { /* ignore focus errors */ }
+            }, 50);
         }
     }
 
     function closeModal() {
         if (ui.mfaForm && ui.mfaForm.style.display === 'block' && !window.Auth.isAuthenticated()) return;
-        if (ui.authModal) ui.authModal.style.display = 'none';
+        if (ui.authModal) {
+            // If a descendant inside the modal currently has focus, blur it first
+            try {
+                if (document.activeElement && ui.authModal.contains(document.activeElement)) {
+                    document.activeElement.blur();
+                }
+            } catch (e) { /* ignore */ }
+
+            // Return focus to a logical control outside the modal (login or register button), if present
+            try {
+                const fallback = ui.loginBtnTop || ui.regBtnTop;
+                if (fallback && typeof fallback.focus === 'function') fallback.focus();
+            } catch (e) { /* ignore */ }
+
+            ui.authModal.setAttribute('aria-hidden', 'true');
+            ui.authModal.style.display = 'none';
+        }
     }
 
     // Only MFA codes are restricted to numeric PIN entry
