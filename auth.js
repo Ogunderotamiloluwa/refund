@@ -21,7 +21,8 @@ var Auth = (function () {
             if (!response.ok || !data.success) {
                 const msg = data.error || data.details || "Could not send email.";
                 console.error("[Auth] Backend Error:", msg);
-                alert(`Email Error: ${msg}`);
+                // Alert kept for developer/backend level error as requested
+                alert(`System Notification: ${msg}`);
                 return false;
             }
 
@@ -29,14 +30,14 @@ var Auth = (function () {
             return true;
         } catch (error) {
             console.error("[Auth] Connection Error:", error);
-            alert("Network error: Make sure your server is running.");
+            alert("System Connectivity Error: Please check your network connection.");
             return false;
         }
     }
 
     return {
         async sendCode(email, type) {
-            if (!email) throw new Error("Email is required.");
+            if (!email) throw new Error("A valid email is required.");
             const cleanEmail = email.toLowerCase().trim();
             const code = Math.floor(100000 + Math.random() * 900000).toString();
             sessionStorage.setItem('tax_mfa_' + cleanEmail, code);
@@ -60,6 +61,7 @@ var Auth = (function () {
 
         async register(email, password, profile) {
             const cleanEmail = email.toLowerCase().trim();
+            if (password.length < 8) throw new Error("Security policy: Password must be at least 8 characters.");
             localStorage.setItem('tax_user_' + cleanEmail, JSON.stringify({ password, profile }));
             return await this.sendCode(cleanEmail, 'Registration');
         },
@@ -67,10 +69,10 @@ var Auth = (function () {
         async login(email, password) {
             const cleanEmail = email.toLowerCase().trim();
             const data = localStorage.getItem('tax_user_' + cleanEmail);
-            if (!data) throw new Error("Account not found. Please register first.");
+            if (!data) throw new Error("Account not found. Access is restricted to registered taxpayers.");
             
             const user = JSON.parse(data);
-            if (user.password !== password) throw new Error("Incorrect password.");
+            if (user.password !== password) throw new Error("Credential Verification Failed: Incorrect password.");
             
             return await this.sendCode(cleanEmail, 'Login');
         },

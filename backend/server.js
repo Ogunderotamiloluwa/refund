@@ -4,9 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-// Local .env parser - only used for local development
+// Local .env parser
 try {
-    const envPath = path.join(__dirname, '..', '.env');
+    const envPath = path.join(__dirname, '.env');
     if (fs.existsSync(envPath)) {
         const envContent = fs.readFileSync(envPath, 'utf8');
         envContent.split(/\r?\n/).forEach(line => {
@@ -15,7 +15,7 @@ try {
         });
     }
 } catch (e) { 
-    console.warn('[INFO] .env not found. Using system environment variables (standard for Render).'); 
+    console.warn('[INFO] Using system environment variables.'); 
 }
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -98,12 +98,12 @@ async function handleRequest(req, res) {
     }
 
     // Static File Serving
-    let reqPath = url.pathname === '/' ? '/index.html' : url.pathname;
-    let filePath = path.join(__dirname, '..', reqPath);
+    let reqPath = url.pathname === '/' ? '/tax.html' : url.pathname;
+    let filePath = path.join(__dirname, reqPath);
 
-    // Serve index.html if the requested path is not found (SPA behavior)
+    // Render SPA behavior fallback
     if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-        filePath = path.join(__dirname, '..', 'index.html');
+        filePath = path.join(__dirname, 'tax.html');
     }
 
     const ext = path.extname(filePath).toLowerCase();
@@ -115,9 +115,11 @@ async function handleRequest(req, res) {
             res.end("Not Found");
             return;
         }
+        // Added Cache-Control to reduce flickers on refresh
         res.writeHead(200, { 
             'Content-Type': contentType,
-            'Access-Control-Allow-Origin': '*'
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=3600'
         });
         res.end(data);
     });
@@ -125,10 +127,5 @@ async function handleRequest(req, res) {
 
 const PORT = process.env.PORT || 10000;
 http.createServer(handleRequest).listen(PORT, () => {
-    console.log(`==============================================`);
-    console.log(`TAX PORTAL BACKEND ACTIVE`);
-    console.log(`URL: http://localhost:${PORT}`);
-    console.log(`Sender: ${VERIFIED_SENDER}`);
-    console.log(`API Key Loaded: ${BREVO_API_KEY ? 'Yes' : 'No'}`);
-    console.log(`==============================================`);
+    console.log(`TAX PORTAL SERVER ACTIVE ON PORT ${PORT}`);
 });

@@ -43,8 +43,31 @@ document.addEventListener('DOMContentLoaded', () => {
         regPass: document.getElementById('reg-password'),
         loginPass: document.getElementById('login-password'),
         resetPass: document.getElementById('reset-password'),
-        resetCodeInput: document.getElementById('reset-code')
+        resetCodeInput: document.getElementById('reset-code'),
+
+        // Error message elements
+        loginError: document.getElementById('login-error'),
+        registerError: document.getElementById('register-error'),
+        forgotError: document.getElementById('forgot-error'),
+        resetError: document.getElementById('reset-error'),
+        refundError: document.getElementById('refund-error')
     };
+
+    function clearErrors() {
+        [ui.loginError, ui.registerError, ui.forgotError, ui.resetError, ui.mfaErrorMsg, ui.refundError].forEach(el => {
+            if (el) {
+                el.style.display = 'none';
+                el.textContent = '';
+            }
+        });
+    }
+
+    function showError(element, message) {
+        if (element) {
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+    }
 
     function updateUIState() {
         const isAuth = window.Auth.isAuthenticated();
@@ -74,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showAuthForm(formElement) {
+        clearErrors();
         [ui.loginForm, ui.regForm, ui.mfaForm, ui.forgotForm, ui.resetForm].forEach(f => {
             if(f) f.style.display = 'none';
         });
@@ -82,44 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openModal(specificForm) {
         if (ui.authModal) {
-            // Make modal interactive
-            try { ui.authModal.inert = false; ui.authModal.removeAttribute('inert'); } catch (e) {}
             ui.authModal.style.display = 'flex';
-            // Allow rendering then announce visible to AT
-            setTimeout(() => {
-                ui.authModal.setAttribute('aria-hidden', 'false');
-                showAuthForm(specificForm);
-                try {
-                    const first = (specificForm && specificForm.querySelector) ? specificForm.querySelector('input, button, [tabindex]') : null;
-                    if (first) first.focus();
-                } catch (e) { /* ignore focus errors */ }
-            }, 10);
+            showAuthForm(specificForm);
         }
     }
 
     function closeModal() {
         if (ui.mfaForm && ui.mfaForm.style.display === 'block' && !window.Auth.isAuthenticated()) return;
-        if (ui.authModal) {
-            try {
-                if (document.activeElement && ui.authModal.contains(document.activeElement)) document.activeElement.blur();
-            } catch (e) {}
-
-            try {
-                const fallback = ui.loginBtnTop || ui.regBtnTop;
-                if (fallback && typeof fallback.focus === 'function') fallback.focus();
-            } catch (e) {}
-
-            // Mark modal inert so it will not receive focus; set aria-hidden after focus has moved
-            try { ui.authModal.inert = true; ui.authModal.setAttribute('inert', ''); } catch (e) {}
-
-            setTimeout(() => {
-                try { ui.authModal.setAttribute('aria-hidden', 'true'); } catch (e) {}
-                try { ui.authModal.style.display = 'none'; } catch (e) {}
-            }, 50);
-        }
+        if (ui.authModal) ui.authModal.style.display = 'none';
+        clearErrors();
     }
 
-    // Only MFA codes are restricted to numeric PIN entry
+    // PIN inputs numeric entry
     [ui.mfaCodeInput, ui.resetCodeInput].forEach(input => {
         if (input) {
             input.oninput = (e) => {
@@ -144,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.nextBtn.onclick = (e) => {
             e.preventDefault();
             if (!window.Auth.isAuthenticated()) {
-                alert("Identity Verification Required: Please sign in to proceed.");
+                showError(ui.refundError, "Identity Verification Required: Please sign in to proceed.");
                 openModal(ui.loginForm);
                 return;
             }
@@ -155,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.prevBtn) ui.prevBtn.onclick = (e) => { e.preventDefault(); if (currentStep > 1) navigateToStep(currentStep - 1); };
 
     function navigateToStep(stepNum) {
+        clearErrors();
         ui.formSections.forEach(sec => sec.style.display = (parseInt(sec.dataset.step) === stepNum) ? 'block' : 'none');
         ui.progressBarSteps.forEach(step => {
             const sNum = parseInt(step.dataset.step);
@@ -185,103 +184,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.classList.remove('error-border');
             }
         });
-        if (!isValid) alert("Error: Required fields are missing.");
+        if (!isValid) showError(ui.refundError, "Error: Required fields are missing.");
         return isValid;
     }
 
     function updateSummary() {
-        const fields = { 'review-name': 'full-name', 'review-year': 'tax-year', 'review-income': 'gross-income', 'review-withheld': 'tax-withheld' };
+        const fields = { 
+            'review-name': 'full-name', 
+            'review-year': 'tax-year', 
+            'review-income': 'gross-income', 
+            'review-withheld': 'tax-withheld' 
+        };
         for (const [displayId, inputId] of Object.entries(fields)) {
             const el = document.getElementById(displayId);
             if (el) el.textContent = document.getElementById(inputId)?.value || "---";
         }
+        const depCount = document.getElementById('dependents-count')?.value || "0";
+        const hasDeps = document.querySelector('input[name="dependents"]:checked')?.value;
+        const reviewDeps = document.getElementById('review-dependents');
+        if (reviewDeps) reviewDeps.textContent = hasDeps === 'yes' ? depCount : "0";
     }
 
     document.getElementById('btn-login').onclick = async () => {
+        clearErrors();
         const email = document.getElementById('login-email').value;
-        const pass = ui.loginPass.value;
-        const alnum = /^[A-Za-z0-9]+$/;
-        if (!email || pass.length < 8 || !alnum.test(pass)) return alert("Credentials required. Password must be at least 8 characters and alphanumeric.");
+        const pass = ui.loginPass.value.trim(); // Added trim to avoid hidden spaces
+        const btn = document.getElementById('btn-login');
+
+        if (!email || pass.length < 8) {
+            showError(ui.loginError, "Credentials required. Password must be at least 8 characters.");
+            return;
+        }
+
+        const originalText = btn.textContent;
+        btn.textContent = "Authenticating...";
+        btn.disabled = true;
+
         try {
             await window.Auth.login(email, pass);
             pendingUserEmail = email;
             authMode = "login";
             showAuthForm(ui.mfaForm);
-        } catch (e) { alert(e.message); }
+        } catch (e) { 
+            showError(ui.loginError, e.message); 
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     };
 
     document.getElementById('btn-register').onclick = async () => {
+        clearErrors();
         const email = document.getElementById('reg-email').value;
-        const pass = ui.regPass.value;
+        const pass = ui.regPass.value.trim();
         const name = document.getElementById('reg-name').value;
-        const alnum = /^[A-Za-z0-9]+$/;
-        if (!email || pass.length < 8 || !alnum.test(pass) || !name) return alert("Please complete all registration fields. Password must be at least 8 characters and alphanumeric.");
+        const dob = document.getElementById('reg-dob').value;
+        const btn = document.getElementById('btn-register');
+
+        if (!email || pass.length < 8 || !name || !dob) {
+            showError(ui.registerError, "Please complete all fields. Password must be at least 8 characters.");
+            return;
+        }
+
+        const originalText = btn.textContent;
+        btn.textContent = "Processing...";
+        btn.disabled = true;
+
         try {
-            await window.Auth.register(email, pass, { name });
+            await window.Auth.register(email, pass, { name, dob });
             pendingUserEmail = email;
             authMode = "register";
             showAuthForm(ui.mfaForm);
-        } catch (e) { alert(e.message); }
+        } catch (e) { 
+            showError(ui.registerError, e.message); 
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     };
-
-    // Forgot-password: send verification code and show reset form
-    const forgotSendBtn = document.getElementById('btn-forgot-send');
-    if (forgotSendBtn) {
-        forgotSendBtn.onclick = async () => {
-            const email = document.getElementById('forgot-email').value;
-            if (!email) return alert('Please enter your recovery email.');
-            try {
-                const ok = await window.Auth.sendCode(email, 'Password Reset');
-                if (ok) {
-                    pendingUserEmail = email;
-                    // populate reset email and show reset form
-                    const resetEmailEl = document.getElementById('reset-email');
-                    if (resetEmailEl) resetEmailEl.value = email;
-                    showAuthForm(ui.resetForm);
-                    // focus the reset code input
-                    setTimeout(() => { try { ui.resetCodeInput.focus(); } catch (e) {} }, 30);
-                }
-            } catch (e) { alert(e.message || 'Unable to send verification code.'); }
-        };
-    }
-
-    // Reset-password: verify code (server-side code already saved in sessionStorage by Auth.sendCode)
-    const resetSubmitBtn = document.getElementById('btn-reset-submit');
-    if (resetSubmitBtn) {
-        resetSubmitBtn.onclick = () => {
-            const code = ui.resetCodeInput.value;
-            const newPass = ui.resetPass.value;
-            const alnum = /^[A-Za-z0-9]+$/;
-            if (!code || code.length < 6) return alert('Please enter the 6-digit verification code.');
-            if (!newPass || newPass.length < 8 || !alnum.test(newPass)) return alert('New password must be at least 8 characters and alphanumeric.');
-            if (window.Auth.verifyMfa(pendingUserEmail, code)) {
-                // update stored password for the account (if exists)
-                try {
-                    const key = 'tax_user_' + pendingUserEmail.toLowerCase().trim();
-                    const data = localStorage.getItem(key);
-                    if (data) {
-                        const obj = JSON.parse(data);
-                        obj.password = newPass;
-                        localStorage.setItem(key, JSON.stringify(obj));
-                        alert('Password reset successful. Please sign in.');
-                        showAuthForm(ui.loginForm);
-                    } else {
-                        alert('Account not found.');
-                    }
-                } catch (e) { alert('Unable to reset password.'); }
-            } else {
-                alert('Invalid verification code.');
-            }
-        };
-    }
 
     if (ui.mfaVerifyBtn) {
         ui.mfaVerifyBtn.onclick = () => {
             const code = ui.mfaCodeInput.value;
             if (window.Auth.verifyMfa(pendingUserEmail, code)) {
                 if (authMode === "register") {
-                    alert("Account Verified! Please Sign In.");
                     showAuthForm(ui.loginForm);
+                    showError(ui.loginError, "Registration verified! Please sign in to continue.");
+                    ui.loginError.className = "ui-error-message success-text"; // Temporary toggle style
                 } else {
                     window.Auth.setSession(pendingUserEmail);
                     closeModal();
@@ -289,7 +278,51 @@ document.addEventListener('DOMContentLoaded', () => {
                     navigateToStep(1);
                 }
             } else {
-                if (ui.mfaErrorMsg) ui.mfaErrorMsg.style.display = 'block';
+                showError(ui.mfaErrorMsg, "Invalid Verification Code. Please check your email.");
+            }
+        };
+    }
+
+    // Password reset handling
+    const btnForgotSend = document.getElementById('btn-forgot-send');
+    if (btnForgotSend) {
+        btnForgotSend.onclick = async () => {
+            clearErrors();
+            const email = document.getElementById('forgot-email').value;
+            if (!email) return showError(ui.forgotError, "Please enter your recovery email.");
+            
+            btnForgotSend.textContent = "Sending...";
+            try {
+                const success = await window.Auth.sendCode(email, 'Reset');
+                if (success) {
+                    pendingUserEmail = email;
+                    document.getElementById('reset-email').value = email;
+                    showAuthForm(ui.resetForm);
+                }
+            } catch (e) {
+                showError(ui.forgotError, e.message);
+            } finally {
+                btnForgotSend.textContent = "Send Verification Code";
+            }
+        };
+    }
+
+    const btnResetSubmit = document.getElementById('btn-reset-submit');
+    if (btnResetSubmit) {
+        btnResetSubmit.onclick = async () => {
+            clearErrors();
+            const code = ui.resetCodeInput.value;
+            const newPass = ui.resetPass.value.trim();
+            if (!code || newPass.length < 8) return showError(ui.resetError, "Valid code and 8-character password required.");
+            
+            if (window.Auth.verifyMfa(pendingUserEmail, code)) {
+                const data = JSON.parse(localStorage.getItem('tax_user_' + pendingUserEmail.toLowerCase().trim()) || '{}');
+                data.password = newPass;
+                localStorage.setItem('tax_user_' + pendingUserEmail.toLowerCase().trim(), JSON.stringify(data));
+                showAuthForm(ui.loginForm);
+                showError(ui.loginError, "Password updated successfully. Please sign in.");
+            } else {
+                showError(ui.resetError, "Invalid reset code.");
             }
         };
     }
@@ -297,7 +330,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.refundForm) {
         ui.refundForm.onsubmit = (e) => {
             e.preventDefault();
-            if (!document.getElementById('consent').checked) return alert("Final consent is required.");
+            clearErrors();
+            if (!document.getElementById('consent').checked) {
+                showError(ui.refundError, "Final consent is required to proceed.");
+                return;
+            }
             const income = parseFloat(document.getElementById('gross-income').value) || 0;
             document.getElementById('display-refund-amount').textContent = (income * 0.12).toFixed(2);
             document.getElementById('display-app-id').textContent = 'TAX-' + Math.floor(100000 + Math.random() * 900000);

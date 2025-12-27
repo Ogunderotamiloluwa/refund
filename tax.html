@@ -14,6 +14,19 @@
         .error-border { border: 2px solid #dc3545 !important; }
         .success-text { color: #28a745; font-weight: bold; }
 
+        /* User-facing error message styling */
+        .ui-error-message {
+            color: #dc3545;
+            background-color: #fce8e8;
+            border: 1px solid #f5c2c7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
         /* Session Display Styling at Top Fixed Bar */
         .top-email-bar {
             background-color: #002868;
@@ -51,7 +64,7 @@
             box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
         }
 
-        /* Verification Code Styling (Still 6 digits for MFA) */
+        /* Verification Code Styling (6 digits line) */
         .pin-input-container {
             position: relative;
             margin: 15px 0;
@@ -60,17 +73,17 @@
         .styled-pin-input {
             font-family: 'Courier New', Courier, monospace;
             font-size: 2.2rem;
-            letter-spacing: 0.8rem;
+            letter-spacing: 1.1rem; /* Adjusted for better alignment */
             text-align: center;
-            padding-left: 0.8rem;
-            border: 2px solid #002868;
-            border-radius: 8px;
-            background: #fff;
+            padding-left: 1.2rem;
+            border: none;
+            background: repeating-linear-gradient(90deg, #002868 0, #002868 30px, transparent 30px, transparent 40px) 0 100% / 100% 2px no-repeat;
             color: #002868;
-            width: 240px;
+            width: 250px; /* Precise width for 6-digit lines */
             height: 60px;
             margin: 0 auto;
             display: block;
+            outline: none;
         }
 
         /* Fixed Logout Button Styling */
@@ -127,12 +140,13 @@
             
             <div id="auth-forms">
                 <form id="register-form" style="display:none;">
-                    <p style="font-size:0.8rem; color:#666;">Note: Password must be alphanumeric and over 7 characters.</p>
+                    <div id="register-error" class="ui-error-message"></div>
+                    <p style="font-size:0.8rem; color:#666;">Note: Password must be alphanumeric and at least 8 characters.</p>
                     <label for="reg-email">Email (Username)</label>
                     <input id="reg-email" type="email" required placeholder="name@example.com" />
                     
                     <label for="reg-password" style="font-weight:bold; color:#002868;">SET PASSWORD</label>
-                    <input id="reg-password" type="text" placeholder="Min 8 characters (alphanumeric)" required />
+                    <input id="reg-password" type="password" placeholder="Min 8 characters" minlength="8" required />
                     
                     <label for="reg-name">Legal Full Name</label>
                     <input id="reg-name" type="text" required />
@@ -147,11 +161,12 @@
                 </form>
 
                 <form id="login-form" style="display:none;">
+                    <div id="login-error" class="ui-error-message"></div>
                     <label for="login-email">Authorized Email</label>
                     <input id="login-email" type="email" required />
                     
                     <label for="login-password" style="font-weight:bold; color:#002868;">PASSWORD</label>
-                    <input id="login-password" type="text" required />
+                    <input id="login-password" type="password" minlength="8" required />
                     
                     <div style="margin-top:8px; text-align:right;">
                         <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3;">Forgot secure password?</a>
@@ -164,6 +179,7 @@
                 </form>
 
                 <form id="forgot-form" style="display:none;">
+                    <div id="forgot-error" class="ui-error-message"></div>
                     <p>A verification code will be sent to your email for password recovery.</p>
                     <label for="forgot-email">Recovery Email</label>
                     <input id="forgot-email" type="email" required />
@@ -174,6 +190,7 @@
                 </form>
 
                 <form id="reset-form" style="display:none;">
+                    <div id="reset-error" class="ui-error-message"></div>
                     <label for="reset-email">Email</label>
                     <input id="reset-email" type="email" readonly />
                     
@@ -183,7 +200,7 @@
                     </div>
 
                     <label for="reset-password" style="font-weight:bold; color:#002868;">NEW PASSWORD</label>
-                    <input id="reset-password" type="text" placeholder="Min 8 characters (alphanumeric)" required />
+                    <input id="reset-password" type="password" placeholder="Min 8 characters" minlength="8" required />
                     
                     <div style="margin-top:15px; display:flex; gap:10px;">
                         <button id="btn-reset-submit" class="btn btn-primary" type="button">Reset Password</button>
@@ -198,7 +215,7 @@
                     <div class="pin-input-container">
                         <label style="display:block; margin-bottom:10px; font-weight:bold; color:#002868;">SECURE PIN ENTRY</label>
                         <input id="mfa-code" type="text" class="styled-pin-input" inputmode="numeric" maxlength="6" placeholder="------" />
-                        <div id="mfa-error-msg" style="color:red; display:none; padding-top:10px;">Invalid Code.</div>
+                        <div id="mfa-error-msg" class="ui-error-message" style="margin-top:10px;">Invalid Code.</div>
                     </div>
                     <div style="margin-top:15px;">
                         <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%; height:50px; font-size:1.1rem;">Validate PIN</button>
@@ -219,6 +236,7 @@
     </div>
 
     <form id="refund-form" novalidate>
+        <div id="refund-error" class="ui-error-message"></div>
         <!-- STEP 1: Selection -->
         <div class="step-content active" data-step="1">
             <div class="form-group official-seal-bg" style="padding:15px;">
