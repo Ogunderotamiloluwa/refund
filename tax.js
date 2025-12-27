@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (element) {
             element.textContent = message;
             element.style.display = 'block';
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 
@@ -184,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.classList.remove('error-border');
             }
         });
-        if (!isValid) showError(ui.refundError, "Error: Required fields are missing.");
+        if (!isValid) showError(ui.refundError, "Form Incomplete: Please fill all required fields highlighted in red.");
         return isValid;
     }
 
@@ -208,16 +209,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-login').onclick = async () => {
         clearErrors();
         const email = document.getElementById('login-email').value;
-        const pass = ui.loginPass.value.trim(); // Added trim to avoid hidden spaces
+        const pass = ui.loginPass.value.trim(); 
         const btn = document.getElementById('btn-login');
 
         if (!email || pass.length < 8) {
-            showError(ui.loginError, "Credentials required. Password must be at least 8 characters.");
+            showError(ui.loginError, "Access Denied: Email and Password (8+ characters) are required.");
             return;
         }
 
         const originalText = btn.textContent;
-        btn.textContent = "Authenticating...";
+        btn.textContent = "Verifying Credentials...";
         btn.disabled = true;
 
         try {
@@ -242,12 +243,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('btn-register');
 
         if (!email || pass.length < 8 || !name || !dob) {
-            showError(ui.registerError, "Please complete all fields. Password must be at least 8 characters.");
+            showError(ui.registerError, "Registration Incomplete: All fields are mandatory. Password must be 8+ characters.");
             return;
         }
 
         const originalText = btn.textContent;
-        btn.textContent = "Processing...";
+        btn.textContent = "Creating Secure ID...";
         btn.disabled = true;
 
         try {
@@ -269,8 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.Auth.verifyMfa(pendingUserEmail, code)) {
                 if (authMode === "register") {
                     showAuthForm(ui.loginForm);
-                    showError(ui.loginError, "Registration verified! Please sign in to continue.");
-                    ui.loginError.className = "ui-error-message success-text"; // Temporary toggle style
+                    showError(ui.loginError, "Identity Verified! You can now sign in to your new portal account.");
                 } else {
                     window.Auth.setSession(pendingUserEmail);
                     closeModal();
@@ -278,20 +278,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     navigateToStep(1);
                 }
             } else {
-                showError(ui.mfaErrorMsg, "Invalid Verification Code. Please check your email.");
+                showError(ui.mfaErrorMsg, "Verification Failed: The PIN entered is incorrect. Please check your email inbox.");
             }
         };
     }
 
-    // Password reset handling
     const btnForgotSend = document.getElementById('btn-forgot-send');
     if (btnForgotSend) {
         btnForgotSend.onclick = async () => {
             clearErrors();
             const email = document.getElementById('forgot-email').value;
-            if (!email) return showError(ui.forgotError, "Please enter your recovery email.");
+            if (!email) return showError(ui.forgotError, "Required: Please enter your registered email address.");
             
-            btnForgotSend.textContent = "Sending...";
+            btnForgotSend.textContent = "Dispatching Code...";
+            btnForgotSend.disabled = true;
             try {
                 const success = await window.Auth.sendCode(email, 'Reset');
                 if (success) {
@@ -302,7 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (e) {
                 showError(ui.forgotError, e.message);
             } finally {
-                btnForgotSend.textContent = "Send Verification Code";
+                btnForgotSend.textContent = "Send Code";
+                btnForgotSend.disabled = false;
             }
         };
     }
@@ -313,16 +314,16 @@ document.addEventListener('DOMContentLoaded', () => {
             clearErrors();
             const code = ui.resetCodeInput.value;
             const newPass = ui.resetPass.value.trim();
-            if (!code || newPass.length < 8) return showError(ui.resetError, "Valid code and 8-character password required.");
+            if (!code || newPass.length < 8) return showError(ui.resetError, "Invalid Input: Enter the 6-digit code and a new password (8+ chars).");
             
             if (window.Auth.verifyMfa(pendingUserEmail, code)) {
                 const data = JSON.parse(localStorage.getItem('tax_user_' + pendingUserEmail.toLowerCase().trim()) || '{}');
                 data.password = newPass;
                 localStorage.setItem('tax_user_' + pendingUserEmail.toLowerCase().trim(), JSON.stringify(data));
                 showAuthForm(ui.loginForm);
-                showError(ui.loginError, "Password updated successfully. Please sign in.");
+                showError(ui.loginError, "Security Update: Your password has been successfully reset. Please log in.");
             } else {
-                showError(ui.resetError, "Invalid reset code.");
+                showError(ui.resetError, "Invalid Reset Code: The PIN entered does not match our records.");
             }
         };
     }
@@ -332,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             clearErrors();
             if (!document.getElementById('consent').checked) {
-                showError(ui.refundError, "Final consent is required to proceed.");
+                showError(ui.refundError, "Legal Requirement: You must accept the declaration to submit.");
                 return;
             }
             const income = parseFloat(document.getElementById('gross-income').value) || 0;

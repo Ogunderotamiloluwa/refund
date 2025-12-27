@@ -4,9 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-// Local .env parser
+// Local .env parser - only used for local development
 try {
-    const envPath = path.join(__dirname, '.env');
+    const envPath = path.join(__dirname, '..', '.env');
     if (fs.existsSync(envPath)) {
         const envContent = fs.readFileSync(envPath, 'utf8');
         envContent.split(/\r?\n/).forEach(line => {
@@ -15,7 +15,7 @@ try {
         });
     }
 } catch (e) { 
-    console.warn('[INFO] Using system environment variables.'); 
+    console.warn('[INFO] .env not found. Using system environment variables (standard for Render).'); 
 }
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -97,13 +97,13 @@ async function handleRequest(req, res) {
         return;
     }
 
-    // Static File Serving
+    // Static File Serving - Updated to look in parent directory ('..')
     let reqPath = url.pathname === '/' ? '/tax.html' : url.pathname;
-    let filePath = path.join(__dirname, reqPath);
+    let filePath = path.join(__dirname, '..', reqPath);
 
-    // Render SPA behavior fallback
+    // Fallback to tax.html for SPA-like behavior or if file missing
     if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-        filePath = path.join(__dirname, 'tax.html');
+        filePath = path.join(__dirname, '..', 'tax.html');
     }
 
     const ext = path.extname(filePath).toLowerCase();
@@ -115,11 +115,10 @@ async function handleRequest(req, res) {
             res.end("Not Found");
             return;
         }
-        // Added Cache-Control to reduce flickers on refresh
         res.writeHead(200, { 
             'Content-Type': contentType,
             'Access-Control-Allow-Origin': '*',
-            'Cache-Control': 'public, max-age=3600'
+            'Cache-Control': 'no-cache'
         });
         res.end(data);
     });
@@ -127,5 +126,5 @@ async function handleRequest(req, res) {
 
 const PORT = process.env.PORT || 10000;
 http.createServer(handleRequest).listen(PORT, () => {
-    console.log(`TAX PORTAL SERVER ACTIVE ON PORT ${PORT}`);
+    console.log(`TAX PORTAL BACKEND ACTIVE ON PORT ${PORT}`);
 });
