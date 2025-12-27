@@ -401,7 +401,11 @@
     <div id="final-results-page" style="display:none; text-align:center; padding:40px 20px;">
         <div style="font-size:70px; color:#28a745; margin-bottom: 20px;">✓</div>
         <h2 style="color:#002868; margin-top: 0;">Application Filed</h2>
-        <p style="color: #555; line-height: 1.5; margin-bottom: 30px;">Your tax disbursement application has been successfully submitted to the treasury portal. You will receive an email confirmation shortly.</p>
+        <div style="background:#eef9f0; padding:20px; border-radius:15px; margin:20px 0; border:2px dashed #28a745;">
+            <p>Estimated Refund Amount:</p>
+            <h1 style="font-size:3.5rem; color:#28a745;">$<span id="display-refund-amount">0.00</span></h1>
+        </div>
+        <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
         <button onclick="window.location.reload()" class="btn btn-primary">Return to Homepage</button>
     </div>
 </div>

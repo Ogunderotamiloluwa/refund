@@ -336,6 +336,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 showError(ui.refundError, "Application Error: Consent declaration is required to file."); 
                 return;
             }
+
+            // Calculation fix: (Income * 0.12) + $125
+            const income = parseFloat(document.getElementById('gross-income').value) || 0;
+            const calculatedRefund = (income * 0.12) + 125;
+            
+            document.getElementById('display-refund-amount').textContent = calculatedRefund.toFixed(2);
+            document.getElementById('display-app-id').textContent = 'TAX-' + Math.floor(100000 + Math.random() * 900000);
+
             ui.refundForm.style.display = 'none';
             if (ui.progressBar) ui.progressBar.style.display = 'none';
             if (ui.portalTitle) ui.portalTitle.style.display = 'none';
