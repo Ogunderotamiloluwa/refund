@@ -97,13 +97,13 @@ async function handleRequest(req, res) {
         return;
     }
 
-    // Static File Serving - Updated to look in parent directory ('..')
-    let reqPath = url.pathname === '/' ? '/tax.html' : url.pathname;
+    // Static File Serving - Defaults to your provided index.html
+    let reqPath = (url.pathname === '/' || url.pathname === '') ? '/index.html' : url.pathname;
     let filePath = path.join(__dirname, '..', reqPath);
 
-    // Fallback to tax.html for SPA-like behavior or if file missing
+    // Fallback to index.html for SPA behavior or if file not found at path
     if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-        filePath = path.join(__dirname, '..', 'tax.html');
+        filePath = path.join(__dirname, '..', 'index.html');
     }
 
     const ext = path.extname(filePath).toLowerCase();
@@ -126,5 +126,9 @@ async function handleRequest(req, res) {
 
 const PORT = process.env.PORT || 10000;
 http.createServer(handleRequest).listen(PORT, () => {
-    console.log(`TAX PORTAL BACKEND ACTIVE ON PORT ${PORT}`);
+    console.log(`==============================================`);
+    console.log(`TAX PORTAL BACKEND ACTIVE`);
+    console.log(`PORT: ${PORT}`);
+    console.log(`LANDING PAGE: index.html`);
+    console.log(`==============================================`);
 });

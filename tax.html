@@ -65,29 +65,33 @@
             box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
         }
 
-        /* Professional 6-digit line style for PIN entry */
+        /* Professional 6-digit individual lines for PIN entry */
         .pin-input-container {
             position: relative;
             margin: 25px 0;
             text-align: center;
+            display: flex;
+            justify-content: center;
         }
         .styled-pin-input {
             font-family: 'Courier New', Courier, monospace;
             font-size: 2.5rem;
-            letter-spacing: 20px; /* Spacing between digits */
+            letter-spacing: 23px; /* Spacing to align with 6 dashes */
             text-align: left;
-            padding-left: 20px;
+            padding-left: 15px;
             border: none;
-            background: repeating-linear-gradient(90deg, 
-                #002868 0px, #002868 30px, 
-                transparent 30px, transparent 45px) 
-                0 100% / 100% 3px no-repeat;
+            /* Creates exactly 6 distinct underscores */
+            background-image: linear-gradient(to right, #002868 70%, rgba(255, 255, 255, 0) 0%);
+            background-position: bottom;
+            background-size: 45px 3px;
+            background-repeat: repeat-x;
             color: #002868;
-            width: 270px; 
+            width: 270px; /* 6 * 45px */
             height: 60px;
             margin: 0 auto;
             display: block;
             outline: none;
+            background-position-x: 0;
         }
 
         /* Fixed Logout Button Styling */
