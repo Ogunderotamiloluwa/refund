@@ -173,7 +173,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-login').onclick = async () => {
         const email = document.getElementById('login-email').value;
         const pass = ui.loginPass.value;
-        if (!email || pass.length < 8) return alert("Credentials required. Password must be at least 8 characters.");
+        const alnum = /^[A-Za-z0-9]+$/;
+        if (!email || pass.length < 8 || !alnum.test(pass)) return alert("Credentials required. Password must be at least 8 characters and alphanumeric.");
         try {
             await window.Auth.login(email, pass);
             pendingUserEmail = email;
@@ -186,7 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('reg-email').value;
         const pass = ui.regPass.value;
         const name = document.getElementById('reg-name').value;
-        if (!email || pass.length < 8 || !name) return alert("Please complete all registration fields.");
+        const alnum = /^[A-Za-z0-9]+$/;
+        if (!email || pass.length < 8 || !alnum.test(pass) || !name) return alert("Please complete all registration fields. Password must be at least 8 characters and alphanumeric.");
         try {
             await window.Auth.register(email, pass, { name });
             pendingUserEmail = email;
