@@ -82,37 +82,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openModal(specificForm) {
         if (ui.authModal) {
+            // Make modal interactive
+            try { ui.authModal.inert = false; ui.authModal.removeAttribute('inert'); } catch (e) {}
             ui.authModal.style.display = 'flex';
-            ui.authModal.setAttribute('aria-hidden', 'false');
-            showAuthForm(specificForm);
-            // Move focus into the modal to the first focusable element
+            // Allow rendering then announce visible to AT
             setTimeout(() => {
+                ui.authModal.setAttribute('aria-hidden', 'false');
+                showAuthForm(specificForm);
                 try {
                     const first = (specificForm && specificForm.querySelector) ? specificForm.querySelector('input, button, [tabindex]') : null;
                     if (first) first.focus();
                 } catch (e) { /* ignore focus errors */ }
-            }, 50);
+            }, 10);
         }
     }
 
     function closeModal() {
         if (ui.mfaForm && ui.mfaForm.style.display === 'block' && !window.Auth.isAuthenticated()) return;
         if (ui.authModal) {
-            // If a descendant inside the modal currently has focus, blur it first
             try {
-                if (document.activeElement && ui.authModal.contains(document.activeElement)) {
-                    document.activeElement.blur();
-                }
-            } catch (e) { /* ignore */ }
+                if (document.activeElement && ui.authModal.contains(document.activeElement)) document.activeElement.blur();
+            } catch (e) {}
 
-            // Return focus to a logical control outside the modal (login or register button), if present
             try {
                 const fallback = ui.loginBtnTop || ui.regBtnTop;
                 if (fallback && typeof fallback.focus === 'function') fallback.focus();
-            } catch (e) { /* ignore */ }
+            } catch (e) {}
 
-            ui.authModal.setAttribute('aria-hidden', 'true');
-            ui.authModal.style.display = 'none';
+            // Mark modal inert so it will not receive focus; set aria-hidden after focus has moved
+            try { ui.authModal.inert = true; ui.authModal.setAttribute('inert', ''); } catch (e) {}
+
+            setTimeout(() => {
+                try { ui.authModal.setAttribute('aria-hidden', 'true'); } catch (e) {}
+                try { ui.authModal.style.display = 'none'; } catch (e) {}
+            }, 50);
         }
     }
 
