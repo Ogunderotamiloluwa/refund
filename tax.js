@@ -423,6 +423,5 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
-
     updateUIState();
 });
